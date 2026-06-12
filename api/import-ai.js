@@ -1,5 +1,6 @@
-// POST: Nhập đề từ file PDF / ảnh bằng AI (Claude API)
+// POST: Nhập đề từ file PDF / ảnh bằng AI qua OpenRouter
 // body: { fileBase64, mediaType: 'application/pdf'|'image/png'|'image/jpeg', subject, grade }
+// Env: OPENROUTER_API_KEY (bắt buộc), OPENROUTER_MODEL (tùy chọn, mặc định google/gemini-2.5-flash)
 // Trả về mảng câu hỏi đã chuẩn hóa (LaTeX trong $...$) để GV xem trước rồi mới lưu
 import { requireAuth } from './_lib/auth.js';
 import { ok, err } from './_lib/respond.js';
@@ -25,42 +26,54 @@ export default async function handler(req, res) {
   const auth = requireAuth(req, res, ['teacher', 'admin']);
   if (!auth) return;
 
-  if (!process.env.ANTHROPIC_API_KEY)
-    return err(res, 500, 'Chưa cấu hình ANTHROPIC_API_KEY trong Environment Variables của Vercel');
+  if (!process.env.OPENROUTER_API_KEY)
+    return err(res, 500, 'Chưa cấu hình OPENROUTER_API_KEY trong Environment Variables của Vercel');
 
   try {
     const { fileBase64, mediaType, subject = 'Toán', grade = '12' } = req.body || {};
     if (!fileBase64 || !mediaType) return err(res, 400, 'Thiếu file');
 
-    // PDF dùng block "document", ảnh dùng block "image"
+    // OpenRouter dùng định dạng OpenAI-compatible:
+    // - Ảnh: block image_url với data URL
+    // - PDF: block file với file_data dạng data URL
     const fileBlock = mediaType === 'application/pdf'
-      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileBase64 } }
-      : { type: 'image', source: { type: 'base64', media_type: mediaType, data: fileBase64 } };
+      ? { type: 'file', file: { filename: 'de-thi.pdf', file_data: `data:application/pdf;base64,${fileBase64}` } }
+      : { type: 'image_url', image_url: { url: `data:${mediaType};base64,${fileBase64}` } };
 
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
+
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        // 2 header tùy chọn giúp thống kê trên dashboard OpenRouter
+        'HTTP-Referer': 'https://edubank.vercel.app',
+        'X-Title': 'EduBank'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model,
         max_tokens: 16000,
-        messages: [{ role: 'user', content: [fileBlock, { type: 'text', text: PROMPT(subject, grade) }] }]
+        messages: [{
+          role: 'user',
+          content: [{ type: 'text', text: PROMPT(subject, grade) }, fileBlock]
+        }]
       })
     });
     const data = await resp.json();
-    if (data.error) return err(res, 500, 'Lỗi AI: ' + (data.error.message || 'không xác định'));
+    if (data.error)
+      return err(res, 500, 'Lỗi AI: ' + (data.error.message || JSON.stringify(data.error)));
 
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+    const text = data.choices?.[0]?.message?.content || '';
     // Bóc JSON: bỏ code fence nếu có, tìm mảng [...]
     const clean = text.replace(/```json|```/g, '').trim();
     const start = clean.indexOf('['), end = clean.lastIndexOf(']');
-    if (start === -1 || end === -1) return err(res, 500, 'AI không trả về JSON hợp lệ, hãy thử lại với file rõ nét hơn');
+    if (start === -1 || end === -1)
+      return err(res, 500, 'AI không trả về JSON hợp lệ, hãy thử lại với file rõ nét hơn hoặc đổi model');
     const questions = JSON.parse(clean.slice(start, end + 1));
 
     return ok(res, {
+      model,
       questions: questions.map(q => ({
         subject, grade,
         topic: q.topic || '',
