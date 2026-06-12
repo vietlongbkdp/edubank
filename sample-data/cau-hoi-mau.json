@@ -1,0 +1,112 @@
+[
+  {
+    "subject": "Toán", "grade": "12", "topic": "Tổ hợp - Xác suất", "type": "single_choice",
+    "content": "Có bao nhiêu cách chọn hai học sinh từ một nhóm gồm 34 học sinh?",
+    "options": [
+      {"label": "A", "text": "$2^{34}$"}, {"label": "B", "text": "$A_{34}^2$"},
+      {"label": "C", "text": "$34^2$"}, {"label": "D", "text": "$C_{34}^2$"}
+    ],
+    "correctAnswer": "D", "difficulty": 2, "cognitiveLevel": "nhan_biet",
+    "solution": "Chọn 2 học sinh từ 34 học sinh (không phân biệt thứ tự) là tổ hợp chập 2 của 34: $C_{34}^2$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 1"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Mũ - Logarit", "type": "single_choice",
+    "content": "Với $a$ là số thực dương tùy ý, $\\ln(5a) - \\ln(3a)$ bằng",
+    "options": [
+      {"label": "A", "text": "$\\dfrac{\\ln(5a)}{\\ln(3a)}$"}, {"label": "B", "text": "$\\ln(2a)$"},
+      {"label": "C", "text": "$\\ln\\dfrac{5}{3}$"}, {"label": "D", "text": "$\\dfrac{\\ln 5}{\\ln 3}$"}
+    ],
+    "correctAnswer": "C", "difficulty": 2, "cognitiveLevel": "nhan_biet",
+    "solution": "$\\ln(5a) - \\ln(3a) = \\ln\\dfrac{5a}{3a} = \\ln\\dfrac{5}{3}$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 6"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Nguyên hàm - Tích phân", "type": "single_choice",
+    "content": "Nguyên hàm của hàm số $f(x) = x^3 + x$ là",
+    "options": [
+      {"label": "A", "text": "$x^4 + x^2 + C$"}, {"label": "B", "text": "$3x^2 + 1 + C$"},
+      {"label": "C", "text": "$x^3 + x + C$"}, {"label": "D", "text": "$\\dfrac{1}{4}x^4 + \\dfrac{1}{2}x^2 + C$"}
+    ],
+    "correctAnswer": "D", "difficulty": 2, "cognitiveLevel": "nhan_biet",
+    "solution": "$\\int (x^3 + x)\\,dx = \\dfrac{x^4}{4} + \\dfrac{x^2}{2} + C$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 7"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Số phức", "type": "single_choice",
+    "content": "Số phức $-3 + 7i$ có phần ảo bằng",
+    "options": [
+      {"label": "A", "text": "$3$"}, {"label": "B", "text": "$-7$"},
+      {"label": "C", "text": "$-3$"}, {"label": "D", "text": "$7$"}
+    ],
+    "correctAnswer": "D", "difficulty": 1, "cognitiveLevel": "nhan_biet",
+    "solution": "Số phức $z = a + bi$ có phần ảo là $b$. Với $z = -3 + 7i$ thì phần ảo bằng $7$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 9"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Mặt nón - trụ - cầu", "type": "single_choice",
+    "content": "Diện tích của mặt cầu bán kính $R$ bằng",
+    "options": [
+      {"label": "A", "text": "$\\dfrac{4}{3}\\pi R^2$"}, {"label": "B", "text": "$2\\pi R^2$"},
+      {"label": "C", "text": "$4\\pi R^2$"}, {"label": "D", "text": "$\\pi R^2$"}
+    ],
+    "correctAnswer": "C", "difficulty": 1, "cognitiveLevel": "nhan_biet",
+    "solution": "Công thức diện tích mặt cầu: $S = 4\\pi R^2$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 10"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Dãy số - Giới hạn", "type": "single_choice",
+    "content": "$\\lim \\dfrac{1}{5n+3}$ bằng",
+    "options": [
+      {"label": "A", "text": "$0$"}, {"label": "B", "text": "$\\dfrac{1}{3}$"},
+      {"label": "C", "text": "$+\\infty$"}, {"label": "D", "text": "$\\dfrac{1}{5}$"}
+    ],
+    "correctAnswer": "A", "difficulty": 1, "cognitiveLevel": "nhan_biet",
+    "solution": "Khi $n \\to +\\infty$ thì $5n + 3 \\to +\\infty$, do đó $\\dfrac{1}{5n+3} \\to 0$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 13"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Mũ - Logarit", "type": "single_choice",
+    "content": "Phương trình $2^{2x+1} = 32$ có nghiệm là",
+    "options": [
+      {"label": "A", "text": "$x = \\dfrac{5}{2}$"}, {"label": "B", "text": "$x = 2$"},
+      {"label": "C", "text": "$x = \\dfrac{3}{2}$"}, {"label": "D", "text": "$x = 3$"}
+    ],
+    "correctAnswer": "B", "difficulty": 2, "cognitiveLevel": "thong_hieu",
+    "solution": "$2^{2x+1} = 32 = 2^5 \\Leftrightarrow 2x + 1 = 5 \\Leftrightarrow x = 2$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 14"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Khối đa diện", "type": "single_choice",
+    "content": "Cho khối chóp có đáy là hình vuông cạnh $a$, chiều cao bằng $2a$. Thể tích của khối chóp đã cho bằng",
+    "options": [
+      {"label": "A", "text": "$4a^3$"}, {"label": "B", "text": "$\\dfrac{2}{3}a^3$"},
+      {"label": "C", "text": "$2a^3$"}, {"label": "D", "text": "$\\dfrac{4}{3}a^3$"}
+    ],
+    "correctAnswer": "B", "difficulty": 2, "cognitiveLevel": "thong_hieu",
+    "solution": "$V = \\dfrac{1}{3}S_{đáy} \\cdot h = \\dfrac{1}{3} \\cdot a^2 \\cdot 2a = \\dfrac{2}{3}a^3$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 15"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Mũ - Logarit", "type": "single_choice",
+    "content": "Một người gửi tiết kiệm vào một ngân hàng với lãi suất $7{,}5\\%$/năm. Biết rằng nếu không rút tiền thì cứ sau mỗi năm số tiền lãi sẽ được nhập vào vốn để tính lãi cho năm tiếp theo. Hỏi sau ít nhất bao nhiêu năm người đó thu được (cả vốn lẫn lãi) gấp đôi số tiền gửi ban đầu, giả định lãi suất không thay đổi?",
+    "options": [
+      {"label": "A", "text": "11 năm"}, {"label": "B", "text": "9 năm"},
+      {"label": "C", "text": "10 năm"}, {"label": "D", "text": "12 năm"}
+    ],
+    "correctAnswer": "C", "difficulty": 4, "cognitiveLevel": "van_dung",
+    "solution": "Cần $(1{,}075)^n \\ge 2 \\Leftrightarrow n \\ge \\log_{1{,}075} 2 \\approx 9{,}58$. Vậy ít nhất $10$ năm.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 16"
+  },
+  {
+    "subject": "Toán", "grade": "12", "topic": "Tổ hợp - Xác suất", "type": "single_choice",
+    "content": "Từ một hộp chứa 11 quả cầu màu đỏ và 4 quả cầu màu xanh, lấy ngẫu nhiên đồng thời 3 quả cầu. Xác suất để lấy được 3 quả cầu màu xanh bằng",
+    "options": [
+      {"label": "A", "text": "$\\dfrac{4}{455}$"}, {"label": "B", "text": "$\\dfrac{24}{455}$"},
+      {"label": "C", "text": "$\\dfrac{4}{165}$"}, {"label": "D", "text": "$\\dfrac{33}{91}$"}
+    ],
+    "correctAnswer": "A", "difficulty": 4, "cognitiveLevel": "van_dung",
+    "solution": "$P = \\dfrac{C_4^3}{C_{15}^3} = \\dfrac{4}{455}$.",
+    "source": "THPT QG 2018 - Mã 101 - Câu 21"
+  }
+]
