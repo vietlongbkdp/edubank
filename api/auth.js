@@ -8,8 +8,11 @@ import { ok, err } from './_lib/respond.js';
 const publicUser = (u) => ({
   _id: u._id, fullName: u.fullName, email: u.email, role: u.role,
   avatarUrl: u.avatarUrl, school: u.school, subjectsTaught: u.subjectsTaught,
-  grade: u.grade, bio: u.bio
+  grade: u.grade, bio: u.bio, teacherCode: u.teacherCode
 });
+
+// Sinh mã giáo viên duy nhất dạng GV-XXXXXX
+export const genTeacherCode = () => 'GV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return err(res, 405, 'Method không hỗ trợ');
@@ -23,10 +26,12 @@ export default async function handler(req, res) {
       if (password.length < 6) return err(res, 400, 'Mật khẩu tối thiểu 6 ký tự');
       const exists = await User.findOne({ email: email.toLowerCase() });
       if (exists) return err(res, 400, 'Email đã được sử dụng');
+      const isTeacher = role === 'teacher';
       const user = await User.create({
         fullName, email,
         passwordHash: await bcrypt.hash(password, 10),
-        role: role === 'teacher' ? 'teacher' : 'student' // admin chỉ tạo thủ công trong DB
+        role: isTeacher ? 'teacher' : 'student', // admin chỉ tạo thủ công trong DB
+        teacherCode: isTeacher ? genTeacherCode() : undefined
       });
       return ok(res, { token: signToken(user), user: publicUser(user) }, 'Đăng ký thành công');
     }

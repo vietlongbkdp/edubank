@@ -6,11 +6,12 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faPenToSquare, faTrash, faFileImport, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faPenToSquare, faTrash, faFileImport, faEye, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { useSnackbar } from 'notistack';
 import client, { apiMsg } from '../../api/client';
 import { SUBJECTS, GRADES, TOPICS, diffColor } from '../../utils/constants';
 import QuestionForm from './QuestionForm';
+import ImportAIDialog from './ImportAIDialog';
 import QuestionView from '../../components/QuestionView';
 
 export default function QuestionBank() {
@@ -24,6 +25,7 @@ export default function QuestionBank() {
   const [editing, setEditing] = useState(null);
   const [preview, setPreview] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [importText, setImportText] = useState('');
 
   const load = useCallback(async () => {
@@ -98,9 +100,12 @@ export default function QuestionBank() {
     <Box>
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2} sx={{ mb: 2.5 }}>
         <Typography variant="h4">Kho câu hỏi</Typography>
-        <Stack direction="row" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+          <Button variant="outlined" color="secondary" startIcon={<FontAwesomeIcon icon={faRobot} />} onClick={() => setAiOpen(true)}>
+            Nhập từ PDF/Ảnh (AI)
+          </Button>
           <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFileImport} />} onClick={() => setImportOpen(true)}>
-            Nhập hàng loạt
+            Nhập JSON
           </Button>
           <Button variant="contained" startIcon={<FontAwesomeIcon icon={faPlus} />}
             onClick={() => { setEditing(null); setFormOpen(true); }}>
@@ -167,6 +172,7 @@ export default function QuestionBank() {
       </Card>
 
       <QuestionForm open={formOpen} onClose={() => setFormOpen(false)} editing={editing} onSaved={load} />
+      <ImportAIDialog open={aiOpen} onClose={() => setAiOpen(false)} onSaved={load} />
 
       {/* Xem trước câu hỏi */}
       <Dialog open={!!preview} onClose={() => setPreview(null)} maxWidth="sm" fullWidth>

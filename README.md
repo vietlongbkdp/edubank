@@ -31,6 +31,7 @@ Nền tảng cho giáo viên quản lý ngân hàng câu hỏi, tạo đề thi 
 | `CLOUDINARY_CLOUD_NAME` | cloud name |
 | `CLOUDINARY_API_KEY` | api key |
 | `CLOUDINARY_API_SECRET` | api secret |
+| `ANTHROPIC_API_KEY` | (tùy chọn) API key từ console.anthropic.com — bật tính năng "Nhập đề từ PDF/Ảnh bằng AI" |
 
 4. Deploy. Xong!
 
@@ -57,6 +58,12 @@ src/
   components/         # Latex, QuestionView, AppLayout, DiffChip...
   utils/exportExam.js # xuất Word/PDF + trộn mã đề 101–104
 ```
+
+## Tính năng nâng cao
+- **Nhập đề bằng AI**: GV upload PDF/ảnh chụp đề → AI đọc và chuyển công thức sang LaTeX, tách câu hỏi, ước lượng độ khó & chuyên đề → xem trước → lưu vào kho. Câu chưa rõ đáp án được lưu dạng NHÁP. Cần `ANTHROPIC_API_KEY`. File tối đa 3MB; PDF dài nên tách 2–3 trang mỗi lần.
+- **Mã giáo viên**: mỗi GV có mã `GV-XXXXXX` (hiện trên Dashboard, có nút copy). Học sinh vào "Luyện đề theo GV", nhập mã để xem danh sách đề được chia sẻ.
+- **Khóa đề**: khi tạo/sửa đề, GV có thể đặt mã khóa. Đề khóa hiện 🔒, học sinh phải nhập đúng mã mới làm được; để trống = đề mở.
+- **Di trú dữ liệu cũ**: tài khoản GV cũ tự được cấp mã khi mở Dashboard. Hoặc admin gọi `POST /api/migrate` (đăng nhập admin, gửi kèm header Authorization) để cấp hàng loạt.
 
 ## Ghi chú quan trọng
 - **LaTeX**: nhập công thức dạng `$x^2 + 1$` (inline) hoặc `$$\int_0^1 x\,dx$$` (block) trong đề bài / phương án / lời giải — web render bằng KaTeX. Khi **xuất Word**, công thức giữ nguyên dạng văn bản LaTeX để GV chỉnh bằng MathType/Equation; khi **xuất PDF** (qua hộp thoại in → "Lưu thành PDF") công thức hiển thị đẹp như trên web.

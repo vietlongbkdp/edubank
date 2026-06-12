@@ -1,7 +1,9 @@
 // Tổng quan giáo viên: số liệu kho, phân bố độ khó, câu hỏi lệch độ khó thực tế
 import { useState, useEffect } from 'react';
-import { Box, Grid, Card, CardContent, Typography, Stack, Chip, Alert } from '@mui/material';
-import { faDatabase, faFileLines, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { Box, Grid, Card, CardContent, Typography, Stack, Chip, Alert, Button, Tooltip } from '@mui/material';
+import { faDatabase, faFileLines, faTriangleExclamation, faCopy, faQrcode } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { GRADIENT } from '../../theme';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useSnackbar } from 'notistack';
 import client, { apiMsg } from '../../api/client';
@@ -13,12 +15,20 @@ export default function TeacherDashboard() {
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [stats, setStats] = useState(null);
+  const [teacherCode, setTeacherCode] = useState(user?.teacherCode || '');
 
   useEffect(() => {
     client.get('/analytics', { params: { scope: 'teacher' } })
       .then(({ data }) => setStats(data.data))
       .catch(e => enqueueSnackbar(apiMsg(e), { variant: 'error' }));
+    // Lấy hồ sơ: GV cũ chưa có mã sẽ được server tự cấp ở bước này (lazy migration)
+    client.get('/users').then(({ data }) => setTeacherCode(data.data.teacherCode || '')).catch(() => {});
   }, []);
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(teacherCode);
+    enqueueSnackbar('Đã copy mã GV — gửi mã này cho học sinh để các em tìm đề của bạn', { variant: 'success' });
+  };
 
   const chartData = [...Array(10)].map((_, i) => ({
     name: `M${i + 1}`, difficulty: i + 1,
@@ -31,6 +41,29 @@ export default function TeacherDashboard() {
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         Đây là bức tranh tổng quan về kho câu hỏi và đề thi của bạn.
       </Typography>
+
+      {teacherCode && (
+        <Card sx={{ mb: 2.5, background: GRADIENT, color: '#fff' }}>
+          <CardContent sx={{ py: '18px !important' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} justifyContent="space-between">
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <FontAwesomeIcon icon={faQrcode} size="2x" />
+                <Box>
+                  <Typography variant="body2" sx={{ opacity: .85 }}>Mã giáo viên của bạn — gửi cho học sinh để các em vào "Luyện đề theo GV"</Typography>
+                  <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: 2 }}>{teacherCode}</Typography>
+                </Box>
+              </Stack>
+              <Tooltip title="Copy mã">
+                <Button variant="contained" onClick={copyCode}
+                  sx={{ bgcolor: '#fff', color: 'primary.main', '&:hover': { bgcolor: '#EEF2FF' } }}
+                  startIcon={<FontAwesomeIcon icon={faCopy} />}>
+                  Copy
+                </Button>
+              </Tooltip>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
 
       <Grid container spacing={2.5}>
         <Grid item xs={12} sm={6} md={4}>

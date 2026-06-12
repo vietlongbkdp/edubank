@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faGraduationCap, faGaugeHigh, faDatabase, faWandMagicSparkles, faFileLines,
   faChartLine, faPenToSquare, faUsers, faFlag, faBars, faMoon, faSun,
-  faRightFromBracket, faUser, faClockRotateLeft
+  faRightFromBracket, faUser, faClockRotateLeft, faChalkboardUser
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import { GRADIENT } from '../theme';
@@ -26,6 +26,7 @@ const MENUS = {
   student: [
     { to: '/hs', icon: faGaugeHigh, label: 'Tổng quan', end: true },
     { to: '/hs/thi-thu', icon: faPenToSquare, label: 'Tạo đề thi thử' },
+    { to: '/hs/luyen-de', icon: faChalkboardUser, label: 'Luyện đề theo GV' },
     { to: '/hs/lich-su', icon: faClockRotateLeft, label: 'Lịch sử bài thi' },
     { to: '/hs/tien-bo', icon: faChartLine, label: 'Tiến bộ của tôi' }
   ],

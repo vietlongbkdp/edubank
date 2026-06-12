@@ -18,7 +18,7 @@ export default function ExamGenerator() {
   const [filters, setFilters] = useState({ subject: 'Toán', grade: '12', topics: [] });
   const [source, setSource] = useState('both');
   const [matrix, setMatrix] = useState(Object.fromEntries([...Array(10)].map((_, i) => [i + 1, 0])));
-  const [meta, setMeta] = useState({ title: '', duration: 90, variantCount: 1 });
+  const [meta, setMeta] = useState({ title: '', duration: 90, variantCount: 1, shared: true, accessPassword: '' });
   const [fillNearby, setFillNearby] = useState(true);
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -64,7 +64,10 @@ export default function ExamGenerator() {
         title: meta.title || `Đề ${filters.subject} khối ${filters.grade} — ${new Date().toLocaleDateString('vi-VN')}`,
         subject: filters.subject, grade: filters.grade, duration: Number(meta.duration),
         questionIds: result.questions.map(q => q._id),
-        matrix: Object.entries(matrix).filter(([, c]) => c > 0).map(([d, c]) => ({ difficulty: +d, count: +c }))
+        matrix: Object.entries(matrix).filter(([, c]) => c > 0).map(([d, c]) => ({ difficulty: +d, count: +c })),
+        // Chia sẻ qua mã GV + mã khóa đề (rỗng = đề mở)
+        visibility: meta.shared ? 'public' : 'private',
+        accessPassword: meta.shared ? meta.accessPassword.trim() : ''
       });
       setResult({ ...result, saved: data.data });
       enqueueSnackbar('Đã lưu đề vào "Đề thi của tôi"', { variant: 'success' });
@@ -144,6 +147,15 @@ export default function ExamGenerator() {
                   onChange={e => setMeta({ ...meta, variantCount: e.target.value })}>
                   {[1, 2, 3, 4].map(n => <MenuItem key={n} value={n}>{n} mã đề {n > 1 ? `(101–${100 + n})` : '(101)'}</MenuItem>)}
                 </TextField>
+                <FormControlLabel
+                  control={<Checkbox checked={meta.shared} onChange={e => setMeta({ ...meta, shared: e.target.checked })} />}
+                  label={<Typography variant="body2">Cho học sinh luyện tập (hiện trong mã GV của tôi)</Typography>} />
+                {meta.shared && (
+                  <TextField label="Mã khóa đề (để trống = đề mở, ai cũng làm được)" size="small"
+                    value={meta.accessPassword}
+                    onChange={e => setMeta({ ...meta, accessPassword: e.target.value })}
+                    helperText="Chỉ học sinh có mã này mới làm được bài" />
+                )}
               </Stack>
 
               <Button fullWidth variant="contained" size="large" sx={{ mt: 2.5, background: GRADIENT }}

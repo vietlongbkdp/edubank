@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, CardContent, Typography, Stack, Button, IconButton, Chip, Tooltip,
-  Dialog, DialogTitle, DialogContent, DialogActions, Grid, MenuItem, TextField
+  Dialog, DialogTitle, DialogContent, DialogActions, Grid, MenuItem, TextField,
+  FormControlLabel, Switch
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileWord, faFilePdf, faTrash, faEye, faClock, faListOl } from '@fortawesome/free-solid-svg-icons';
+import { faFileWord, faFilePdf, faTrash, faEye, faClock, faListOl, faLock, faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import client, { apiMsg } from '../../api/client';
@@ -16,6 +17,7 @@ export default function ExamList() {
   const { enqueueSnackbar } = useSnackbar();
   const [exams, setExams] = useState([]);
   const [detail, setDetail] = useState(null);
+  const [shareEdit, setShareEdit] = useState(null); // { exam, shared, password }
   const [variantCount, setVariantCount] = useState(1);
 
   const load = useCallback(async () => {
@@ -39,6 +41,17 @@ export default function ExamList() {
       await client.delete(`/exams?id=${id}`);
       enqueueSnackbar('Đã xóa đề', { variant: 'success' });
       load();
+    } catch (e) { enqueueSnackbar(apiMsg(e), { variant: 'error' }); }
+  };
+
+  const saveShare = async () => {
+    try {
+      await client.put(`/exams?id=${shareEdit.exam._id}`, {
+        visibility: shareEdit.shared ? 'public' : 'private',
+        accessPassword: shareEdit.shared ? shareEdit.password.trim() : ''
+      });
+      enqueueSnackbar('Đã cập nhật chia sẻ đề', { variant: 'success' });
+      setShareEdit(null); load();
     } catch (e) { enqueueSnackbar(apiMsg(e), { variant: 'error' }); }
   };
 
@@ -75,7 +88,14 @@ export default function ExamList() {
               <Card sx={{ height: '100%', '&:hover': { transform: 'translateY(-3px)' } }}>
                 <CardContent>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Chip size="small" color="primary" label={exam.code} />
+                    <Stack direction="row" spacing={.5} flexWrap="wrap" useFlexGap>
+                      <Chip size="small" color="primary" label={exam.code} />
+                      {exam.visibility === 'public' && (
+                        <Chip size="small" color="success" variant="outlined"
+                          icon={<FontAwesomeIcon icon={exam.accessPassword ? faLock : faShareNodes} />}
+                          label={exam.accessPassword ? 'Có khóa' : 'Đề mở'} />
+                      )}
+                    </Stack>
                     <Typography variant="caption" color="text.secondary">
                       {dayjs(exam.createdAt).format('DD/MM/YYYY')}
                     </Typography>
@@ -89,6 +109,12 @@ export default function ExamList() {
                     <Tooltip title="Xem đề"><IconButton onClick={() => openDetail(exam._id)}><FontAwesomeIcon icon={faEye} /></IconButton></Tooltip>
                     <Tooltip title="Tải Word"><IconButton onClick={() => doExport(exam, 'word')}><FontAwesomeIcon icon={faFileWord} /></IconButton></Tooltip>
                     <Tooltip title="Tải PDF"><IconButton onClick={() => doExport(exam, 'pdf')}><FontAwesomeIcon icon={faFilePdf} /></IconButton></Tooltip>
+                    <Tooltip title="Chia sẻ & khóa đề">
+                      <IconButton color={exam.visibility === 'public' ? 'success' : 'default'}
+                        onClick={() => setShareEdit({ exam, shared: exam.visibility === 'public', password: exam.accessPassword || '' })}>
+                        <FontAwesomeIcon icon={faShareNodes} />
+                      </IconButton>
+                    </Tooltip>
                     <Box sx={{ flex: 1 }} />
                     <Tooltip title="Xóa"><IconButton color="error" onClick={() => remove(exam._id)}><FontAwesomeIcon icon={faTrash} /></IconButton></Tooltip>
                   </Stack>
@@ -109,6 +135,31 @@ export default function ExamList() {
           </Stack>
         </DialogContent>
         <DialogActions><Button onClick={() => setDetail(null)}>Đóng</Button></DialogActions>
+      </Dialog>
+
+      {/* Chỉnh chia sẻ + mã khóa đề */}
+      <Dialog open={!!shareEdit} onClose={() => setShareEdit(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Chia sẻ đề cho học sinh</DialogTitle>
+        <DialogContent dividers>
+          {shareEdit && (
+            <Stack spacing={2}>
+              <FormControlLabel
+                control={<Switch checked={shareEdit.shared}
+                  onChange={e => setShareEdit({ ...shareEdit, shared: e.target.checked })} />}
+                label="Hiện đề này khi học sinh nhập mã GV của tôi" />
+              {shareEdit.shared && (
+                <TextField label="Mã khóa đề" size="small" fullWidth
+                  value={shareEdit.password}
+                  onChange={e => setShareEdit({ ...shareEdit, password: e.target.value })}
+                  helperText="Để trống = đề mở, học sinh nào cũng làm được. Có mã = chỉ học sinh được bạn cung cấp mã mới làm được." />
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShareEdit(null)}>Hủy</Button>
+          <Button variant="contained" onClick={saveShare}>Lưu</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

@@ -22,6 +22,7 @@ import TakeExam from './pages/student/TakeExam';
 import ExamResult from './pages/student/ExamResult';
 import Progress from './pages/student/Progress';
 import AttemptHistory from './pages/student/AttemptHistory';
+import TeacherExams from './pages/student/TeacherExams';
 
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminReported from './pages/admin/AdminReported';
@@ -70,6 +71,7 @@ function Shell() {
 
             <Route path="/hs" element={<Guard roles={['student']}><StudentDashboard /></Guard>} />
             <Route path="/hs/thi-thu" element={<Guard roles={['student']}><MockExamCreate /></Guard>} />
+            <Route path="/hs/luyen-de" element={<Guard roles={['student']}><TeacherExams /></Guard>} />
             <Route path="/hs/ket-qua/:attemptId" element={<Guard roles={['student']}><ExamResult /></Guard>} />
             <Route path="/hs/lich-su" element={<Guard roles={['student']}><AttemptHistory /></Guard>} />
             <Route path="/hs/tien-bo" element={<Guard roles={['student']}><Progress /></Guard>} />

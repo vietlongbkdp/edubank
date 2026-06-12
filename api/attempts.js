@@ -32,6 +32,11 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const exam = await Exam.findById(req.body?.examId).populate('questionIds').lean();
       if (!exam) return err(res, 404, 'Không tìm thấy đề thi');
+      // Đề có khóa: phải nhập đúng mã (chủ đề thi không cần nhập)
+      if (exam.accessPassword && String(exam.createdBy) !== auth.id) {
+        if ((req.body?.password || '') !== exam.accessPassword)
+          return err(res, 403, 'Mã khóa đề không đúng');
+      }
       const attempt = await Attempt.create({
         examId: exam._id, studentId: auth.id,
         totalQuestions: exam.questionIds.length

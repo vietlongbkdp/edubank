@@ -18,7 +18,12 @@ export default async function handler(req, res) {
         const users = await User.find().select('-passwordHash').sort({ createdAt: -1 }).lean();
         return ok(res, users);
       }
-      const me = await User.findById(auth.id).select('-passwordHash').lean();
+      const me = await User.findById(auth.id).select('-passwordHash');
+      // Lazy migration: GV tạo trước khi có tính năng mã GV sẽ được cấp mã tại đây
+      if (me && me.role === 'teacher' && !me.teacherCode) {
+        me.teacherCode = 'GV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+        await me.save();
+      }
       return ok(res, me);
     }
 

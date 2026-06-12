@@ -12,6 +12,7 @@ const userSchema = new Schema({
   subjectsTaught: [String],
   grade: String,
   bio: String,
+  teacherCode: { type: String, index: true },  // mã GV để học sinh tra cứu đề, vd GV-A1B2C3
   isLocked: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -59,7 +60,8 @@ const examSchema = new Schema({
   matrix: [{ difficulty: Number, count: Number }],
   totalScore: { type: Number, default: 10 },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', index: true },
-  visibility: { type: String, enum: ['private', 'public'], default: 'private' }
+  visibility: { type: String, enum: ['private', 'public'], default: 'private' },
+  accessPassword: { type: String, default: '' }  // mã khóa đề; rỗng = đề mở, ai cũng làm được
 }, { timestamps: true });
 
 // ===== Lượt làm bài =====
