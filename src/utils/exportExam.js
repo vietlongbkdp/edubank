@@ -1,5 +1,5 @@
 // Xuất đề thi: Word (.docx font Times New Roman, công thức chuyển sang ký hiệu Unicode)
-// và PDF (cửa sổ in, công thức KaTeX đẹp). Tách riêng FILE ĐỀ và FILE ĐÁP ÁN + LỜI GIẢI.
+// và PDF (file tải trực tiếp, công thức KaTeX đẹp). Mỗi định dạng tách 2 FILE: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
 import {
   Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell,
   WidthType, BorderStyle, TableLayoutType
@@ -238,79 +238,97 @@ export async function exportWord(exam, variants) {
   await exportWordAnswers(exam, variants);
 }
 
-/* ============ PDF qua cửa sổ in ============
-   QUAN TRỌNG: cửa sổ phải được mở SYNCHRONOUS ngay khi người dùng bấm nút
-   (truyền vào tham số win) — nếu mở sau await sẽ bị Safari/iOS chặn popup. */
-const KATEX_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.10/katex.min.css';
+/* ============ PDF: tải file trực tiếp về máy (html2pdf = html2canvas + jsPDF) ============
+   Sinh 2 file PDF riêng biệt: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
+   Công thức render bằng KaTeX (CSS đã được nạp sẵn trong app) nên giữ nguyên vẻ đẹp như trên web. */
+import html2pdf from 'html2pdf.js';
 
-function pdfShell(title, body) {
-  return `<!doctype html><html lang="vi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
-<link rel="stylesheet" href="${KATEX_CSS}">
-<style>
-  body { font-family: "Times New Roman", serif; font-size: 13pt; margin: 1.6cm; color: #000; }
-  .exam-header { margin-bottom: 14px; }
-  .q { margin: 12px 0; page-break-inside: avoid; }
-  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 4px; }
-  .sol { margin: 4px 0 14px; padding-left: 12px; border-left: 3px solid #888; }
-  img { max-width: 320px; max-height: 200px; display: block; margin: 6px 0; }
-  .akey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0 18px; }
-  .pagebreak { page-break-before: always; }
-  @media print { .noprint { display: none; } }
-  @media (max-width: 640px) { body { margin: .8cm; } .opts { grid-template-columns: 1fr; } }
-</style></head><body>
-<div class="noprint" style="text-align:center;padding:10px;background:#EEF2FF;border-radius:8px;margin-bottom:16px">
-  Nhấn <b>Ctrl+P / Cmd+P</b> rồi chọn "Lưu thành PDF" — <button onclick="window.print()" style="padding:4px 14px">In ngay</button>
-</div>
-${body}
-</body></html>`;
+const PDF_CSS = `
+  .pdfx { font-family: "Times New Roman", serif; font-size: 13pt; color: #000; line-height: 1.45; }
+  .pdfx .exam-header { margin-bottom: 12px; }
+  .pdfx .q { margin: 11px 0; page-break-inside: avoid; }
+  .pdfx .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 4px; }
+  .pdfx .sol { margin: 4px 0 14px; padding-left: 12px; border-left: 3px solid #888; page-break-inside: avoid; }
+  .pdfx img { max-width: 300px; max-height: 190px; display: block; margin: 6px 0; }
+  .pdfx .akey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0 18px; }
+  .pdfx h2 { margin: 6px 0; } .pdfx h3 { margin: 12px 0 6px; }
+`;
+
+// Dựng HTML phần thân ĐỀ BÀI (dùng chung cho mọi mã đề, ngắt trang giữa các mã)
+function examBodyHtml(exam, variants) {
+  return variants.map(v => `
+    <div class="exam-header">${exam.header || ''}</div>
+    <div style="text-align:center">
+      <h2>${exam.title || 'ĐỀ THI'}</h2>
+      <i>Thời gian làm bài: ${exam.duration} phút — Mã đề: ${v.code}</i>
+    </div>
+    ${v.questions.map((q, i) => `
+      <div class="q">
+        <b>Câu ${i + 1}.</b> ${latexToHtml(q.content)}
+        ${(q.images || []).map(s => `<img src="${s}" crossorigin="anonymous">`).join('')}
+        ${q.options?.length ? `<div class="opts">${q.options.map(op =>
+          `<div><b>${op.label}.</b> ${latexToHtml(op.text || '')}</div>`).join('')}</div>` : ''}
+      </div>`).join('')}
+    <div style="text-align:center;margin-top:18px"><b>---------- HẾT ----------</b></div>
+  `).join('<div class="html2pdf__page-break"></div>');
 }
 
-function renderInto(win, html) {
-  if (!win || win.closed) throw new Error('POPUP_BLOCKED');
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+// Dựng HTML phần thân ĐÁP ÁN + LỜI GIẢI
+function answersBodyHtml(exam, variants) {
+  return variants.map(v => `
+    <div class="exam-header">${exam.header || ''}</div>
+    <div style="text-align:center">
+      <h2>ĐÁP ÁN VÀ LỜI GIẢI — MÃ ĐỀ ${v.code}</h2>
+      <i>${exam.title || ''}</i>
+    </div>
+    <h3>I. Bảng đáp án</h3>
+    <div class="akey">${v.questions.map((q, i) =>
+      `<div>Câu ${i + 1}: <b>${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}</b></div>`).join('')}</div>
+    <h3>II. Lời giải chi tiết</h3>
+    ${v.questions.map((q, i) => `
+      <div class="q">
+        <b>Câu ${i + 1}.</b> ${latexToHtml(q.content)}
+        <div><b>Đáp án: ${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}</b></div>
+        ${q.solution ? `<div class="sol"><i>Lời giải:</i> ${latexToHtml(q.solution)}
+          ${(q.solutionImages || []).map(s => `<img src="${s}" crossorigin="anonymous">`).join('')}</div>` : ''}
+      </div>`).join('')}
+  `).join('<div class="html2pdf__page-break"></div>');
 }
 
-export function exportPdfExam(exam, variants, win) {
-  const body = variants.map(v => `
-  <div class="exam-header">${exam.header || ''}</div>
-  <div style="text-align:center">
-    <h2 style="margin:6px 0">${exam.title || 'ĐỀ THI'}</h2>
-    <i>Thời gian làm bài: ${exam.duration} phút — Mã đề: ${v.code}</i>
-  </div>
-  ${v.questions.map((q, i) => `
-    <div class="q">
-      <b>Câu ${i + 1}.</b> ${latexToHtml(q.content)}
-      ${(q.images || []).map(s => `<img src="${s}">`).join('')}
-      ${q.options?.length ? `<div class="opts">${q.options.map(op =>
-        `<div><b>${op.label}.</b> ${latexToHtml(op.text || '')}</div>`).join('')}</div>` : ''}
-    </div>`).join('')}
-  <div style="text-align:center;margin-top:18px"><b>---------- HẾT ----------</b></div>
-`).join('<div class="pagebreak"></div>');
-  renderInto(win, pdfShell(`${exam.title || 'Đề thi'} — Đề bài`, body));
+// Render HTML ẩn ngoài màn hình → file PDF tải về
+async function htmlToPdfFile(bodyHtml, filename) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;background:#fff;';
+  wrap.innerHTML = `<style>${PDF_CSS}</style><div class="pdfx">${bodyHtml}</div>`;
+  document.body.appendChild(wrap);
+  // Chờ toàn bộ ảnh (Cloudinary) tải xong trước khi chụp
+  await Promise.all([...wrap.querySelectorAll('img')].map(img =>
+    img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })));
+  try {
+    await html2pdf().set({
+      margin: [12, 12, 14, 12],
+      filename,
+      pagebreak: { mode: ['css', 'legacy'] },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(wrap.querySelector('.pdfx')).save();
+  } finally {
+    wrap.remove();
+  }
 }
 
-export function exportPdfAnswers(exam, variants, win) {
-  const body = variants.map(v => `
-  <div class="exam-header">${exam.header || ''}</div>
-  <div style="text-align:center">
-    <h2 style="margin:6px 0">ĐÁP ÁN VÀ LỜI GIẢI — MÃ ĐỀ ${v.code}</h2>
-    <i>${exam.title || ''}</i>
-  </div>
-  <h3>I. Bảng đáp án</h3>
-  <div class="akey">${v.questions.map((q, i) =>
-    `<div>Câu ${i + 1}: <b>${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}</b></div>`).join('')}</div>
-  <h3>II. Lời giải chi tiết</h3>
-  ${v.questions.map((q, i) => `
-    <div class="q">
-      <b>Câu ${i + 1}.</b> ${latexToHtml(q.content)}
-      <div><b>Đáp án: ${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}</b></div>
-      ${q.solution ? `<div class="sol"><i>Lời giải:</i> ${latexToHtml(q.solution)}
-        ${(q.solutionImages || []).map(s => `<img src="${s}">`).join('')}</div>` : ''}
-    </div>`).join('')}
-`).join('<div class="pagebreak"></div>');
-  renderInto(win, pdfShell(`${exam.title || 'Đề thi'} — Đáp án`, body));
+// Tải file PDF ĐỀ BÀI
+export async function exportPdfExam(exam, variants) {
+  await htmlToPdfFile(examBodyHtml(exam, variants), `${safeName(exam.title)}-DE-BAI.pdf`);
+}
+
+// Tải file PDF ĐÁP ÁN + LỜI GIẢI
+export async function exportPdfAnswers(exam, variants) {
+  await htmlToPdfFile(answersBodyHtml(exam, variants), `${safeName(exam.title)}-DAP-AN.pdf`);
+}
+
+// Tải cả 2 file PDF: đề + đáp án (giống nút Word)
+export async function exportPdf(exam, variants) {
+  await exportPdfExam(exam, variants);
+  await exportPdfAnswers(exam, variants);
 }

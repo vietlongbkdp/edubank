@@ -11,7 +11,8 @@ export default defineConfig({
           mui: ['@mui/material', '@mui/x-data-grid'],
           charts: ['recharts'],
           katex: ['katex'],
-          docx: ['docx']
+          docx: ['docx'],
+          pdfgen: ['html2pdf.js']
         }
       }
     }

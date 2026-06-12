@@ -10,7 +10,7 @@ import { useSnackbar } from 'notistack';
 import client, { apiMsg } from '../../api/client';
 import { SUBJECTS, GRADES, TOPICS, diffColor, diffLabel } from '../../utils/constants';
 import QuestionView from '../../components/QuestionView';
-import { makeVariants, exportWord, exportPdfExam, exportPdfAnswers } from '../../utils/exportExam';
+import { makeVariants, exportWord, exportPdf } from '../../utils/exportExam';
 import RichTextEditor from '../../components/RichTextEditor';
 import { GRADIENT } from '../../theme';
 
@@ -86,18 +86,21 @@ export default function ExamGenerator() {
   const getVariants = () => makeVariants(result.questions, Number(meta.variantCount) || 1,
     { shuffleQuestions: meta.variantCount > 1, shuffleOptions: meta.variantCount > 1 });
 
-  const doExport = (kind) => {
+  const [exporting, setExporting] = useState('');
+  const doExport = async (kind) => {
+    setExporting(kind);
     try {
-      if (kind === 'word') return exportWord(examMeta, getVariants()); // tải 2 file: đề + đáp án
-      // PDF: PHẢI mở cửa sổ ngay trong sự kiện bấm nút, nếu không Safari/iOS sẽ chặn
-      const win = window.open('', '_blank');
-      if (kind === 'pdf-exam') exportPdfExam(examMeta, getVariants(), win);
-      else exportPdfAnswers(examMeta, getVariants(), win);
+      // Mỗi định dạng tải về 2 FILE RIÊNG: -DE-BAI và -DAP-AN
+      if (kind === 'word') await exportWord(examMeta, getVariants());
+      else {
+        enqueueSnackbar('Đang tạo 2 file PDF (Đề bài + Đáp án), vui lòng đợi vài giây...', { variant: 'info' });
+        await exportPdf(examMeta, getVariants());
+      }
+      enqueueSnackbar('Đã tải về 2 file: Đề bài + Đáp án & lời giải', { variant: 'success' });
     } catch (e) {
-      enqueueSnackbar(e.message === 'POPUP_BLOCKED'
-        ? 'Trình duyệt chặn cửa sổ mới — hãy cho phép popup cho trang này rồi thử lại'
-        : 'Xuất file thất bại', { variant: 'error' });
-    }
+      console.error(e);
+      enqueueSnackbar('Xuất file thất bại, hãy thử lại', { variant: 'error' });
+    } finally { setExporting(''); }
   };
 
   return (
@@ -219,17 +222,18 @@ export default function ExamGenerator() {
                         onClick={saveExam} disabled={busy || !!result.saved}>
                         {result.saved ? 'Đã lưu' : 'Lưu đề'}
                       </Button>
-                      <Tooltip title="Tải 2 file Word: Đề bài + Đáp án & lời giải">
-                        <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word')}>
-                          Word
+                      <Tooltip title="Tải 2 file Word riêng: Đề bài + Đáp án & lời giải">
+                        <Button variant="outlined" disabled={!!exporting}
+                          startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word')}>
+                          {exporting === 'word' ? 'Đang tạo...' : 'Word (2 file)'}
                         </Button>
                       </Tooltip>
-                      <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf-exam')}>
-                        PDF Đề
-                      </Button>
-                      <Button variant="outlined" color="success" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf-answers')}>
-                        PDF Đáp án
-                      </Button>
+                      <Tooltip title="Tải 2 file PDF riêng: Đề bài + Đáp án & lời giải">
+                        <Button variant="outlined" disabled={!!exporting}
+                          startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf')}>
+                          {exporting === 'pdf' ? 'Đang tạo...' : 'PDF (2 file)'}
+                        </Button>
+                      </Tooltip>
                     </Stack>
                   </Stack>
                 </CardContent>

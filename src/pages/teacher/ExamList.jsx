@@ -6,12 +6,12 @@ import {
   FormControlLabel, Switch
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileWord, faFilePdf, faTrash, faEye, faClock, faListOl, faLock, faShareNodes, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { faFileWord, faFilePdf, faTrash, faEye, faClock, faListOl, faLock, faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import client, { apiMsg } from '../../api/client';
 import QuestionView from '../../components/QuestionView';
-import { makeVariants, exportWord, exportPdfExam, exportPdfAnswers } from '../../utils/exportExam';
+import { makeVariants, exportWord, exportPdf } from '../../utils/exportExam';
 
 export default function ExamList() {
   const { enqueueSnackbar } = useSnackbar();
@@ -55,23 +55,25 @@ export default function ExamList() {
     } catch (e) { enqueueSnackbar(apiMsg(e), { variant: 'error' }); }
   };
 
+  const [exporting, setExporting] = useState('');
   const doExport = async (exam, kind) => {
-    // PDF: mở cửa sổ NGAY khi bấm (trước await) để không bị Safari/iOS chặn popup
-    const win = kind.startsWith('pdf') ? window.open('', '_blank') : null;
+    setExporting(exam._id + kind);
     try {
       const { data } = await client.get('/exams', { params: { id: exam._id, full: 1 } });
       const full = data.data;
       const variants = makeVariants(full.questionIds, Number(variantCount) || 1,
         { shuffleQuestions: variantCount > 1, shuffleOptions: variantCount > 1 });
-      if (kind === 'word') await exportWord(full, variants);          // tải 2 file: đề + đáp án
-      else if (kind === 'pdf-exam') exportPdfExam(full, variants, win);
-      else exportPdfAnswers(full, variants, win);
+      // Mỗi định dạng tải về 2 FILE RIÊNG: -DE-BAI và -DAP-AN
+      if (kind === 'word') await exportWord(full, variants);
+      else {
+        enqueueSnackbar('Đang tạo 2 file PDF (Đề bài + Đáp án), vui lòng đợi vài giây...', { variant: 'info' });
+        await exportPdf(full, variants);
+      }
+      enqueueSnackbar('Đã tải về 2 file: Đề bài + Đáp án & lời giải', { variant: 'success' });
     } catch (e) {
-      if (win && !win.closed) win.close();
-      enqueueSnackbar(e.message === 'POPUP_BLOCKED'
-        ? 'Trình duyệt chặn cửa sổ mới — hãy cho phép popup cho trang này rồi thử lại'
-        : apiMsg(e, 'Xuất file thất bại'), { variant: 'error' });
-    }
+      console.error(e);
+      enqueueSnackbar(apiMsg(e, 'Xuất file thất bại, hãy thử lại'), { variant: 'error' });
+    } finally { setExporting(''); }
   };
 
   return (
@@ -116,9 +118,12 @@ export default function ExamList() {
                   </Stack>
                   <Stack direction="row" spacing={.5} sx={{ mt: 2 }}>
                     <Tooltip title="Xem đề"><IconButton onClick={() => openDetail(exam._id)}><FontAwesomeIcon icon={faEye} /></IconButton></Tooltip>
-                    <Tooltip title="Tải Word (2 file: Đề + Đáp án)"><IconButton onClick={() => doExport(exam, 'word')}><FontAwesomeIcon icon={faFileWord} /></IconButton></Tooltip>
-                    <Tooltip title="Xem PDF Đề bài"><IconButton onClick={() => doExport(exam, 'pdf-exam')}><FontAwesomeIcon icon={faFilePdf} /></IconButton></Tooltip>
-                    <Tooltip title="Xem PDF Đáp án & lời giải"><IconButton color="success" onClick={() => doExport(exam, 'pdf-answers')}><FontAwesomeIcon icon={faSquareCheck} /></IconButton></Tooltip>
+                    <Tooltip title="Tải Word — 2 file riêng: Đề bài + Đáp án">
+                      <IconButton disabled={!!exporting} onClick={() => doExport(exam, 'word')}><FontAwesomeIcon icon={faFileWord} /></IconButton>
+                    </Tooltip>
+                    <Tooltip title="Tải PDF — 2 file riêng: Đề bài + Đáp án">
+                      <IconButton disabled={!!exporting} onClick={() => doExport(exam, 'pdf')}><FontAwesomeIcon icon={faFilePdf} /></IconButton>
+                    </Tooltip>
                     <Tooltip title="Chia sẻ & khóa đề">
                       <IconButton color={exam.visibility === 'public' ? 'success' : 'default'}
                         onClick={() => setShareEdit({ exam, shared: exam.visibility === 'public', password: exam.accessPassword || '' })}>
