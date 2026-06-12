@@ -6,7 +6,7 @@ import {
   faFileWord, faStopwatch, faLayerGroup
 } from '@fortawesome/free-solid-svg-icons';
 import { GRADIENT } from '../theme';
-import { diffColor } from '../utils/constants';
+import { HeroIllustration, StepIllustration } from '../components/Illustrations';
 
 const FEATURES = [
   { icon: faDatabase, title: 'Ngân hàng câu hỏi', desc: 'Quản lý kho câu hỏi cá nhân, phân loại theo môn, chuyên đề, độ khó 1–10, hỗ trợ công thức Toán LaTeX và hình ảnh.' },
@@ -61,59 +61,42 @@ export default function Landing() {
               </Stack>
             </Grid>
             <Grid item xs={12} md={5}>
-              {/* Thang độ khó 1-10 — chữ ký thị giác. Responsive: mobile gọn, tablet căn giữa, desktop đầy đủ */}
-              <Card sx={{
-                borderRadius: { xs: 4, md: 5 },
-                maxWidth: { xs: '100%', sm: 480, md: '100%' },
-                mx: { sm: 'auto' }
-              }}>
-                <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
-                  <Typography
-                    fontWeight={700} color="text.primary" gutterBottom
-                    sx={{ fontSize: { xs: 15, sm: 16, md: 17 } }}
-                  >
-                    Ma trận đề theo độ khó
-                  </Typography>
-                  <Stack spacing={{ xs: .8, sm: 1, md: 1.2 }}>
-                    {[2, 4, 5, 7, 9].map(d => (
-                      <Stack key={d} direction="row" spacing={{ xs: 1, sm: 1.5 }} alignItems="center" sx={{ minWidth: 0 }}>
-                        <Box sx={{
-                          width: { xs: 50, sm: 56, md: 60 },
-                          height: { xs: 22, sm: 26, md: 28 },
-                          flexShrink: 0,
-                          borderRadius: 2, bgcolor: diffColor(d), color: '#fff',
-                          display: 'grid', placeItems: 'center',
-                          fontSize: { xs: 11, sm: 13, md: 13.5 }, fontWeight: 700
-                        }}>
-                          Mức {d}
-                        </Box>
-                        <Box sx={{
-                          flex: 1, minWidth: 40,
-                          height: { xs: 8, sm: 10, md: 11 },
-                          borderRadius: 5, bgcolor: '#EEF2FF', overflow: 'hidden'
-                        }}>
-                          <Box sx={{
-                            width: `${100 - d * 8}%`, height: '100%',
-                            bgcolor: diffColor(d), opacity: .85, borderRadius: 5,
-                            transition: 'width .6s ease'
-                          }} />
-                        </Box>
-                        <Typography
-                          variant="caption" color="text.secondary"
-                          sx={{
-                            flexShrink: 0, textAlign: 'right', whiteSpace: 'nowrap',
-                            width: { xs: 40, sm: 48 },
-                            fontSize: { xs: 11, sm: 12 }
-                          }}
-                        >
-                          {12 - d} câu
-                        </Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
-                </CardContent>
-              </Card>
+              {/* Hình minh họa hero: tờ đề thi + huy hiệu điểm + bút chì + ký hiệu toán trôi nổi */}
+              <HeroIllustration />
             </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Cách hoạt động — 3 bước có hình minh họa */}
+      <Box sx={{ bgcolor: 'background.paper' }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
+          <Typography variant="h4" textAlign="center" gutterBottom sx={{ fontSize: { xs: 26, md: 34 } }}>
+            Tạo đề thi chỉ trong 3 bước
+          </Typography>
+          <Grid container spacing={{ xs: 3, md: 4 }} sx={{ mt: 1 }}>
+            {[
+              { step: 1, title: 'Chọn ma trận độ khó', desc: 'Nhập số câu cho từng mốc độ khó 1–10, giới hạn chuyên đề nếu muốn.' },
+              { step: 2, title: 'Hệ thống sinh đề', desc: 'Câu hỏi được chọn ngẫu nhiên từ kho, xếp từ dễ đến khó như đề thật.' },
+              { step: 3, title: 'Tải về & sử dụng', desc: 'Xuất Word/PDF với 1–4 mã đề trộn sẵn, kèm trang đáp án.' }
+            ].map(s => (
+              <Grid item xs={12} sm={4} key={s.step}>
+                <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { transform: 'translateY(-4px)' } }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ maxWidth: 180, mx: 'auto', mb: 1.5 }}>
+                      <StepIllustration step={s.step} />
+                    </Box>
+                    <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mb: 1 }}>
+                      <Box sx={{ width: 28, height: 28, borderRadius: '50%', background: GRADIENT, color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 14 }}>
+                        {s.step}
+                      </Box>
+                      <Typography variant="h6">{s.title}</Typography>
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary">{s.desc}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
         </Container>
       </Box>
