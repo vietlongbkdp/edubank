@@ -28,20 +28,24 @@ export default function Landing() {
               <FontAwesomeIcon icon={faGraduationCap} size="lg" />
               <Typography variant="h6" fontWeight={800}>EduBank</Typography>
             </Stack>
-            <Stack direction="row" spacing={1.5}>
-              <Button component={Link} to="/dang-nhap" sx={{ color: '#fff' }}>Đăng nhập</Button>
-              <Button component={Link} to="/dang-ky" variant="contained" sx={{ bgcolor: '#fff', color: 'primary.main', '&:hover': { bgcolor: '#EEF2FF' } }}>
-                Đăng ký miễn phí
+            <Stack direction="row" spacing={{ xs: .5, sm: 1.5 }}>
+              <Button component={Link} to="/dang-nhap" size="small"
+                sx={{ color: '#fff', fontSize: { xs: 13, sm: 14 } }}>
+                Đăng nhập
+              </Button>
+              <Button component={Link} to="/dang-ky" variant="contained" size="small"
+                sx={{ bgcolor: '#fff', color: 'primary.main', fontSize: { xs: 13, sm: 14 }, px: { xs: 1.5, sm: 2.5 }, '&:hover': { bgcolor: '#EEF2FF' } }}>
+                Đăng ký
               </Button>
             </Stack>
           </Stack>
 
-          <Grid container spacing={5} alignItems="center" sx={{ pt: { xs: 4, md: 8 } }}>
+          <Grid container spacing={{ xs: 3, sm: 4, md: 5 }} alignItems="center" sx={{ pt: { xs: 3, sm: 5, md: 8 } }}>
             <Grid item xs={12} md={7}>
-              <Typography variant="h3" fontWeight={800} sx={{ lineHeight: 1.2, fontSize: { xs: 34, md: 46 } }}>
+              <Typography variant="h3" fontWeight={800} sx={{ lineHeight: 1.2, fontSize: { xs: 28, sm: 38, md: 46 } }}>
                 Ngân hàng câu hỏi &<br />Thi thử trực tuyến
               </Typography>
-              <Typography sx={{ mt: 2.5, opacity: .92, fontSize: 18, maxWidth: 540 }}>
+              <Typography sx={{ mt: 2.5, opacity: .92, fontSize: { xs: 15.5, sm: 17, md: 18 }, maxWidth: 540 }}>
                 Giáo viên tạo đề theo ma trận độ khó chỉ với vài cú nhấp.
                 Học sinh thi thử, được chấm điểm tức thì và biết chính xác mình cần ôn phần nào.
               </Typography>
@@ -57,20 +61,51 @@ export default function Landing() {
               </Stack>
             </Grid>
             <Grid item xs={12} md={5}>
-              {/* Thang độ khó 1-10 — chữ ký thị giác */}
-              <Card sx={{ borderRadius: 5 }}>
-                <CardContent>
-                  <Typography fontWeight={700} color="text.primary" gutterBottom>Ma trận đề theo độ khó</Typography>
-                  <Stack spacing={1}>
+              {/* Thang độ khó 1-10 — chữ ký thị giác. Responsive: mobile gọn, tablet căn giữa, desktop đầy đủ */}
+              <Card sx={{
+                borderRadius: { xs: 4, md: 5 },
+                maxWidth: { xs: '100%', sm: 480, md: '100%' },
+                mx: { sm: 'auto' }
+              }}>
+                <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+                  <Typography
+                    fontWeight={700} color="text.primary" gutterBottom
+                    sx={{ fontSize: { xs: 15, sm: 16, md: 17 } }}
+                  >
+                    Ma trận đề theo độ khó
+                  </Typography>
+                  <Stack spacing={{ xs: .8, sm: 1, md: 1.2 }}>
                     {[2, 4, 5, 7, 9].map(d => (
-                      <Stack key={d} direction="row" spacing={1.5} alignItems="center">
-                        <Box sx={{ width: 56, height: 26, borderRadius: 2, bgcolor: diffColor(d), color: '#fff', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700 }}>
+                      <Stack key={d} direction="row" spacing={{ xs: 1, sm: 1.5 }} alignItems="center" sx={{ minWidth: 0 }}>
+                        <Box sx={{
+                          width: { xs: 50, sm: 56, md: 60 },
+                          height: { xs: 22, sm: 26, md: 28 },
+                          flexShrink: 0,
+                          borderRadius: 2, bgcolor: diffColor(d), color: '#fff',
+                          display: 'grid', placeItems: 'center',
+                          fontSize: { xs: 11, sm: 13, md: 13.5 }, fontWeight: 700
+                        }}>
                           Mức {d}
                         </Box>
-                        <Box sx={{ flex: 1, height: 10, borderRadius: 5, bgcolor: '#EEF2FF', overflow: 'hidden' }}>
-                          <Box sx={{ width: `${100 - d * 8}%`, height: '100%', bgcolor: diffColor(d), opacity: .85 }} />
+                        <Box sx={{
+                          flex: 1, minWidth: 40,
+                          height: { xs: 8, sm: 10, md: 11 },
+                          borderRadius: 5, bgcolor: '#EEF2FF', overflow: 'hidden'
+                        }}>
+                          <Box sx={{
+                            width: `${100 - d * 8}%`, height: '100%',
+                            bgcolor: diffColor(d), opacity: .85, borderRadius: 5,
+                            transition: 'width .6s ease'
+                          }} />
                         </Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ width: 48 }}>
+                        <Typography
+                          variant="caption" color="text.secondary"
+                          sx={{
+                            flexShrink: 0, textAlign: 'right', whiteSpace: 'nowrap',
+                            width: { xs: 40, sm: 48 },
+                            fontSize: { xs: 11, sm: 12 }
+                          }}
+                        >
                           {12 - d} câu
                         </Typography>
                       </Stack>
