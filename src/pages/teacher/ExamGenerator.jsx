@@ -10,7 +10,8 @@ import { useSnackbar } from 'notistack';
 import client, { apiMsg } from '../../api/client';
 import { SUBJECTS, GRADES, TOPICS, diffColor, diffLabel } from '../../utils/constants';
 import QuestionView from '../../components/QuestionView';
-import { makeVariants, exportWord, exportPdf } from '../../utils/exportExam';
+import { makeVariants, exportWord, exportPdfExam, exportPdfAnswers } from '../../utils/exportExam';
+import RichTextEditor from '../../components/RichTextEditor';
 import { GRADIENT } from '../../theme';
 
 export default function ExamGenerator() {
@@ -18,7 +19,8 @@ export default function ExamGenerator() {
   const [filters, setFilters] = useState({ subject: 'Toán', grade: '12', topics: [] });
   const [source, setSource] = useState('both');
   const [matrix, setMatrix] = useState(Object.fromEntries([...Array(10)].map((_, i) => [i + 1, 0])));
-  const [meta, setMeta] = useState({ title: '', duration: 90, variantCount: 1, shared: true, accessPassword: '' });
+  const DEFAULT_HEADER = '<div style="text-align:center"><b>SỞ GIÁO DỤC VÀ ĐÀO TẠO ..........</b></div><div style="text-align:center"><b>TRƯỜNG THPT ..........</b></div><div style="text-align:center"><br></div>';
+  const [meta, setMeta] = useState({ title: '', duration: 90, variantCount: 1, shared: true, accessPassword: '', header: DEFAULT_HEADER });
   const [fillNearby, setFillNearby] = useState(true);
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -67,7 +69,8 @@ export default function ExamGenerator() {
         matrix: Object.entries(matrix).filter(([, c]) => c > 0).map(([d, c]) => ({ difficulty: +d, count: +c })),
         // Chia sẻ qua mã GV + mã khóa đề (rỗng = đề mở)
         visibility: meta.shared ? 'public' : 'private',
-        accessPassword: meta.shared ? meta.accessPassword.trim() : ''
+        accessPassword: meta.shared ? meta.accessPassword.trim() : '',
+        header: meta.header
       });
       setResult({ ...result, saved: data.data });
       enqueueSnackbar('Đã lưu đề vào "Đề thi của tôi"', { variant: 'success' });
@@ -77,12 +80,24 @@ export default function ExamGenerator() {
 
   const examMeta = {
     title: meta.title || `Đề ${filters.subject} khối ${filters.grade}`,
-    duration: Number(meta.duration)
+    duration: Number(meta.duration),
+    header: meta.header
   };
+  const getVariants = () => makeVariants(result.questions, Number(meta.variantCount) || 1,
+    { shuffleQuestions: meta.variantCount > 1, shuffleOptions: meta.variantCount > 1 });
+
   const doExport = (kind) => {
-    const variants = makeVariants(result.questions, Number(meta.variantCount) || 1,
-      { shuffleQuestions: meta.variantCount > 1, shuffleOptions: meta.variantCount > 1 });
-    kind === 'word' ? exportWord(examMeta, variants) : exportPdf(examMeta, variants);
+    try {
+      if (kind === 'word') return exportWord(examMeta, getVariants()); // tải 2 file: đề + đáp án
+      // PDF: PHẢI mở cửa sổ ngay trong sự kiện bấm nút, nếu không Safari/iOS sẽ chặn
+      const win = window.open('', '_blank');
+      if (kind === 'pdf-exam') exportPdfExam(examMeta, getVariants(), win);
+      else exportPdfAnswers(examMeta, getVariants(), win);
+    } catch (e) {
+      enqueueSnackbar(e.message === 'POPUP_BLOCKED'
+        ? 'Trình duyệt chặn cửa sổ mới — hãy cho phép popup cho trang này rồi thử lại'
+        : 'Xuất file thất bại', { variant: 'error' });
+    }
   };
 
   return (
@@ -138,6 +153,15 @@ export default function ExamGenerator() {
               <Divider sx={{ my: 2.5 }} />
               <Typography variant="h6" gutterBottom>3. Thông tin đề</Typography>
               <Stack spacing={2}>
+                <Box>
+                  <Typography variant="body2" fontWeight={700} gutterBottom>Đầu đề bài (Sở GD, Trường, Môn, Năm học, Mã đề...)</Typography>
+                  <RichTextEditor
+                    value={meta.header}
+                    onChange={(html) => setMeta(m => ({ ...m, header: html }))}
+                    placeholder="Soạn phần đầu trang của đề thi tại đây..."
+                    minHeight={90}
+                  />
+                </Box>
                 <TextField label="Tiêu đề đề thi" size="small" value={meta.title}
                   placeholder={`Đề ${filters.subject} khối ${filters.grade}`}
                   onChange={e => setMeta({ ...meta, title: e.target.value })} />
@@ -195,11 +219,16 @@ export default function ExamGenerator() {
                         onClick={saveExam} disabled={busy || !!result.saved}>
                         {result.saved ? 'Đã lưu' : 'Lưu đề'}
                       </Button>
-                      <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word')}>
-                        Word
+                      <Tooltip title="Tải 2 file Word: Đề bài + Đáp án & lời giải">
+                        <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word')}>
+                          Word
+                        </Button>
+                      </Tooltip>
+                      <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf-exam')}>
+                        PDF Đề
                       </Button>
-                      <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf')}>
-                        PDF
+                      <Button variant="outlined" color="success" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf-answers')}>
+                        PDF Đáp án
                       </Button>
                     </Stack>
                   </Stack>

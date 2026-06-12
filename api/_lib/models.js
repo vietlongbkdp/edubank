@@ -51,6 +51,7 @@ questionSchema.index({ content: 'text', tags: 'text', source: 'text' });
 const examSchema = new Schema({
   code: String,
   title: { type: String, required: true },
+  header: { type: String, default: '' },  // HTML đầu đề: Sở GD, Trường, Môn, Năm học... do GV soạn
   subject: String,
   grade: String,
   duration: { type: Number, default: 90 },        // phút

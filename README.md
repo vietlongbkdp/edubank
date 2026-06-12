@@ -31,8 +31,6 @@ Nền tảng cho giáo viên quản lý ngân hàng câu hỏi, tạo đề thi 
 | `CLOUDINARY_CLOUD_NAME` | cloud name |
 | `CLOUDINARY_API_KEY` | api key |
 | `CLOUDINARY_API_SECRET` | api secret |
-| `OPENROUTER_API_KEY` | (tùy chọn) API key từ openrouter.ai/keys — bật tính năng "Nhập đề từ PDF/Ảnh bằng AI" |
-| `OPENROUTER_MODEL` | (tùy chọn) model AI, mặc định `google/gemini-2.5-flash`. Có thể đổi: `anthropic/claude-sonnet-4.5`, `openai/gpt-4o-mini`... |
 
 4. Deploy. Xong!
 
@@ -61,7 +59,6 @@ src/
 ```
 
 ## Tính năng nâng cao
-- **Nhập đề bằng AI**: GV upload PDF/ảnh chụp đề → AI đọc và chuyển công thức sang LaTeX, tách câu hỏi, ước lượng độ khó & chuyên đề → xem trước → lưu vào kho. Câu chưa rõ đáp án được lưu dạng NHÁP. Cần `OPENROUTER_API_KEY` (đăng ký tại openrouter.ai, nạp tiền dùng được mọi model). Model mặc định `google/gemini-2.5-flash` — rẻ và đọc tài liệu tiếng Việt tốt; đổi model qua biến `OPENROUTER_MODEL`. File tối đa 3MB; PDF dài nên tách 2–3 trang mỗi lần.
 - **Mã giáo viên**: mỗi GV có mã `GV-XXXXXX` (hiện trên Dashboard, có nút copy). Học sinh vào "Luyện đề theo GV", nhập mã để xem danh sách đề được chia sẻ.
 - **Khóa đề**: khi tạo/sửa đề, GV có thể đặt mã khóa. Đề khóa hiện 🔒, học sinh phải nhập đúng mã mới làm được; để trống = đề mở.
 - **Di trú dữ liệu cũ**: tài khoản GV cũ tự được cấp mã khi mở Dashboard. Hoặc admin gọi `POST /api/migrate` (đăng nhập admin, gửi kèm header Authorization) để cấp hàng loạt.
