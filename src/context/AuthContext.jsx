@@ -27,6 +27,12 @@ export function AuthProvider({ children }) {
     return data.data.user;
   };
 
+  const loginGoogle = async (credential, role) => {
+    const { data } = await client.post('/auth', { action: 'google', credential, role });
+    saveSession(data.data);
+    return data.data.user;
+  };
+
   const updateUser = (u) => {
     localStorage.setItem('edubank_user', JSON.stringify(u));
     setUser(u);
@@ -39,7 +45,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, register, loginGoogle, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,11 +7,12 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChalkboardUser, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
+import GoogleButton from '../components/GoogleButton';
 import { apiMsg } from '../api/client';
 import { GRADIENT } from '../theme';
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, loginGoogle } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [form, setForm] = useState({
@@ -29,6 +30,16 @@ export default function Register() {
       navigate(user.role === 'teacher' ? '/gv' : '/hs');
     } catch (err) {
       setError(apiMsg(err, 'Đăng ký thất bại'));
+    } finally { setLoading(false); }
+  };
+
+  const handleGoogle = async (credential) => {
+    setError(''); setLoading(true);
+    try {
+      const user = await loginGoogle(credential, form.role); // tạo tài khoản theo vai trò đang chọn
+      navigate(user.role === 'teacher' ? '/gv' : '/hs');
+    } catch (err) {
+      setError(apiMsg(err, 'Đăng nhập Google thất bại'));
     } finally { setLoading(false); }
   };
 
@@ -63,6 +74,7 @@ export default function Register() {
               </Button>
             </Stack>
           </form>
+          <GoogleButton onCredential={handleGoogle} label="Đăng ký với Google" />
           <Typography variant="body2" textAlign="center" sx={{ mt: 2.5 }}>
             Đã có tài khoản? <Link to="/dang-nhap" style={{ color: '#4F46E5', fontWeight: 600 }}>Đăng nhập</Link>
           </Typography>

@@ -4,11 +4,12 @@ import { Box, Card, CardContent, TextField, Button, Typography, Stack, Alert } f
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
+import GoogleButton from '../components/GoogleButton';
 import { apiMsg } from '../api/client';
 import { GRADIENT } from '../theme';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginGoogle } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -22,6 +23,16 @@ export default function Login() {
       navigate(user.role === 'teacher' ? '/gv' : user.role === 'admin' ? '/admin' : '/hs');
     } catch (err) {
       setError(apiMsg(err, 'Đăng nhập thất bại'));
+    } finally { setLoading(false); }
+  };
+
+  const handleGoogle = async (credential) => {
+    setError(''); setLoading(true);
+    try {
+      const user = await loginGoogle(credential);
+      navigate(user.role === 'teacher' ? '/gv' : user.role === 'admin' ? '/admin' : '/hs');
+    } catch (err) {
+      setError(apiMsg(err, 'Đăng nhập Google thất bại'));
     } finally { setLoading(false); }
   };
 
@@ -48,6 +59,7 @@ export default function Login() {
               </Button>
             </Stack>
           </form>
+          <GoogleButton onCredential={handleGoogle} />
           <Typography variant="body2" textAlign="center" sx={{ mt: 2.5 }}>
             Chưa có tài khoản? <Link to="/dang-ky" style={{ color: '#4F46E5', fontWeight: 600 }}>Đăng ký ngay</Link>
           </Typography>

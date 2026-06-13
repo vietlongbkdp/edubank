@@ -45,6 +45,36 @@ export default async function handler(req, res) {
       return ok(res, { token: signToken(user), user: publicUser(user) }, 'Đăng nhập thành công');
     }
 
+    if (action === 'google') {
+      // Xác thực Google ID token qua tokeninfo endpoint của Google
+      const { credential, role } = req.body;
+      if (!credential) return err(res, 400, 'Thiếu Google credential');
+      const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + credential);
+      const g = await r.json();
+      // Kiểm tra token hợp lệ và đúng client của ứng dụng
+      if (!g.email || (process.env.GOOGLE_CLIENT_ID && g.aud !== process.env.GOOGLE_CLIENT_ID))
+        return err(res, 400, 'Google token không hợp lệ');
+
+      let user = await User.findOne({ email: g.email.toLowerCase() });
+      if (!user) {
+        // Lần đầu đăng nhập Google → tạo tài khoản mới theo vai trò đã chọn
+        const isTeacher = role === 'teacher';
+        user = await User.create({
+          fullName: g.name || g.email.split('@')[0],
+          email: g.email,
+          passwordHash: await bcrypt.hash(Math.random().toString(36) + Date.now(), 10), // mật khẩu ngẫu nhiên (đăng nhập qua Google)
+          role: isTeacher ? 'teacher' : 'student',
+          teacherCode: isTeacher ? genTeacherCode() : undefined,
+          avatarUrl: g.picture
+        });
+      } else {
+        if (user.isLocked) return err(res, 403, 'Tài khoản đã bị khóa, liên hệ quản trị viên');
+        // Cập nhật avatar Google nếu chưa có
+        if (!user.avatarUrl && g.picture) { user.avatarUrl = g.picture; await user.save(); }
+      }
+      return ok(res, { token: signToken(user), user: publicUser(user) }, 'Đăng nhập Google thành công');
+    }
+
     return err(res, 400, 'Action không hợp lệ');
   } catch (e) {
     console.error(e);

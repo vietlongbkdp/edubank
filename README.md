@@ -31,6 +31,8 @@ Nền tảng cho giáo viên quản lý ngân hàng câu hỏi, tạo đề thi 
 | `CLOUDINARY_CLOUD_NAME` | cloud name |
 | `CLOUDINARY_API_KEY` | api key |
 | `CLOUDINARY_API_SECRET` | api secret |
+| `GOOGLE_CLIENT_ID` | (tùy chọn) OAuth Client ID để bật đăng nhập Google |
+| `VITE_GOOGLE_CLIENT_ID` | (tùy chọn) đặt CÙNG giá trị `GOOGLE_CLIENT_ID` — biến này cho frontend |
 
 4. Deploy. Xong!
 
@@ -57,6 +59,12 @@ src/
   components/         # Latex, QuestionView, AppLayout, DiffChip...
   utils/exportExam.js # xuất Word/PDF + trộn mã đề 101–104
 ```
+
+## Bật đăng nhập Google (tùy chọn)
+1. Vào https://console.cloud.google.com → tạo project → **APIs & Services → Credentials → Create OAuth client ID** → loại **Web application**.
+2. Mục **Authorized JavaScript origins** thêm domain Vercel của bạn (vd `https://edubank-theta.vercel.app`) và `http://localhost:5173` nếu chạy local.
+3. Copy **Client ID** dạng `xxxxx.apps.googleusercontent.com`, đặt vào CẢ HAI biến `GOOGLE_CLIENT_ID` và `VITE_GOOGLE_CLIENT_ID` trên Vercel rồi Redeploy.
+4. Nếu không cấu hình, nút Google tự ẩn — các tính năng khác vẫn chạy bình thường.
 
 ## Tính năng nâng cao
 - **Mã giáo viên**: mỗi GV có mã `GV-XXXXXX` (hiện trên Dashboard, có nút copy). Học sinh vào "Luyện đề theo GV", nhập mã để xem danh sách đề được chia sẻ.
