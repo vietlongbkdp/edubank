@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, Typography, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, MenuItem, Stack, Alert, IconButton, Tooltip
+  TextField, MenuItem, Stack, Alert, IconButton, Tooltip, Select
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,6 +10,7 @@ import { faPenToSquare, faKey, faTrash, faCopy } from '@fortawesome/free-solid-s
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import client, { apiMsg } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 
 const STATUS = {
   active: { label: 'Hoạt động', color: 'success' },
@@ -20,6 +21,7 @@ const ROLE = { teacher: 'Giáo viên', student: 'Học sinh', admin: 'Admin' };
 
 export default function AdminUsers() {
   const { enqueueSnackbar } = useSnackbar();
+  const { user: me } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState([]);
@@ -34,6 +36,16 @@ export default function AdminUsers() {
       .finally(() => setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  // Đổi nhanh trạng thái (active / deactive / blocked) cho bất kỳ user nào
+  const changeStatus = async (u, status) => {
+    if (status === u.status) return;
+    try {
+      await client.put(`/users?id=${u._id}`, { status });
+      enqueueSnackbar(`Đã chuyển ${u.fullName} sang "${STATUS[status].label}"`, { variant: 'success' });
+      load();
+    } catch (e) { enqueueSnackbar(apiMsg(e), { variant: 'error' }); }
+  };
 
   const saveEdit = async () => {
     try {
@@ -77,8 +89,19 @@ export default function AdminUsers() {
       renderCell: p => p.row.role === 'teacher' ? (p.value || 0) : '—'
     },
     {
-      field: 'status', headerName: 'Trạng thái', width: 120,
-      renderCell: p => { const s = STATUS[p.value] || STATUS.active; return <Chip size="small" color={s.color} label={s.label} />; }
+      field: 'status', headerName: 'Trạng thái', width: 150,
+      renderCell: p => {
+        const isSelf = String(p.row._id) === String(me?._id);
+        if (isSelf) { const s = STATUS[p.value] || STATUS.active; return <Chip size="small" color={s.color} label={s.label} />; }
+        return (
+          <Select size="small" variant="standard" disableUnderline value={p.value || 'active'}
+            onChange={(e) => changeStatus(p.row, e.target.value)}
+            renderValue={(v) => { const s = STATUS[v] || STATUS.active; return <Chip size="small" color={s.color} label={s.label} />; }}
+            sx={{ '& .MuiSelect-select': { py: 0, display: 'flex', alignItems: 'center' } }}>
+            {Object.entries(STATUS).map(([v, s]) => <MenuItem key={v} value={v}>{s.label}</MenuItem>)}
+          </Select>
+        );
+      }
     },
     { field: 'createdAt', headerName: 'Ngày tạo', width: 110, valueFormatter: p => dayjs(p.value).format('DD/MM/YY') },
     {

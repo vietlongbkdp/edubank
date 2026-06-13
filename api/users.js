@@ -52,6 +52,9 @@ export default async function handler(req, res) {
         const { fullName, email, school, subjectsTaught, grade, bio, role, status } = req.body || {};
         if (status && !['active', 'deactive', 'blocked'].includes(status))
           return err(res, 400, 'Trạng thái không hợp lệ');
+        // Không cho admin tự khóa/tạm ngưng chính mình (tránh tự đăng xuất khỏi hệ thống)
+        if (String(target._id) === String(auth.id) && status && status !== 'active')
+          return err(res, 400, 'Không thể tự thay đổi trạng thái của chính mình');
         if (role && !['teacher', 'student', 'admin'].includes(role))
           return err(res, 400, 'Vai trò không hợp lệ');
 
