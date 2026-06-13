@@ -1,5 +1,6 @@
 // Xuất đề thi: Word (.docx font Times New Roman, công thức chuyển sang ký hiệu Unicode)
-// và PDF (file tải trực tiếp, công thức KaTeX đẹp). Mỗi định dạng tách 2 FILE: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
+// Word: tải file .docx về máy. PDF: mở tab xem trước rồi bấm In/Lưu PDF.
+// Mỗi định dạng tách 2 file: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
 import {
   Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell,
   WidthType, BorderStyle, TableLayoutType
@@ -238,21 +239,49 @@ export async function exportWord(exam, variants) {
   await exportWordAnswers(exam, variants);
 }
 
-/* ============ PDF: tải file trực tiếp về máy (html2pdf = html2canvas + jsPDF) ============
-   Sinh 2 file PDF riêng biệt: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
-   Công thức render bằng KaTeX (CSS đã được nạp sẵn trong app) nên giữ nguyên vẻ đẹp như trên web. */
-import html2pdf from 'html2pdf.js';
+/* ============ PDF: cửa sổ XEM TRƯỚC + IN ============
+   Bấm nút PDF → mở tab mới hiển thị đề với công thức KaTeX đẹp → bấm "In / Lưu PDF".
+   QUAN TRỌNG: cửa sổ phải được mở SYNCHRONOUS ngay khi bấm nút (truyền tham số win),
+   nếu mở sau await sẽ bị Safari/iOS chặn popup. */
+const KATEX_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.10/katex.min.css';
 
 const PDF_CSS = `
-  .pdfx { font-family: "Times New Roman", serif; font-size: 13pt; color: #000; line-height: 1.45; }
-  .pdfx .exam-header { margin-bottom: 12px; }
-  .pdfx .q { margin: 11px 0; page-break-inside: avoid; }
-  .pdfx .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 4px; }
-  .pdfx .sol { margin: 4px 0 14px; padding-left: 12px; border-left: 3px solid #888; page-break-inside: avoid; }
-  .pdfx img { max-width: 300px; max-height: 190px; display: block; margin: 6px 0; }
-  .pdfx .akey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0 18px; }
-  .pdfx h2 { margin: 6px 0; } .pdfx h3 { margin: 12px 0 6px; }
+  body { font-family: "Times New Roman", serif; font-size: 13pt; color: #000; line-height: 1.45; margin: 1.6cm; background: #fff; }
+  .exam-header { margin-bottom: 12px; }
+  .q { margin: 11px 0; page-break-inside: avoid; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 4px; }
+  .sol { margin: 4px 0 14px; padding-left: 12px; border-left: 3px solid #888; page-break-inside: avoid; }
+  img { max-width: 300px; max-height: 190px; display: block; margin: 6px 0; }
+  .akey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0 18px; }
+  h2 { margin: 6px 0; } h3 { margin: 12px 0 6px; }
+  .pagebreak { page-break-before: always; }
+  .noprint { position: sticky; top: 8px; text-align: center; padding: 10px; background: #EEF2FF;
+    border: 1px solid #C7D2FE; border-radius: 10px; margin-bottom: 16px; font-family: system-ui, sans-serif; font-size: 14px; }
+  .noprint button { padding: 6px 18px; border: 0; border-radius: 8px; background: #4F46E5; color: #fff;
+    font-weight: 700; cursor: pointer; margin-left: 8px; }
+  @media print { .noprint { display: none; } body { margin: 0; } }
+  @media (max-width: 640px) { body { margin: .8cm; } .opts { grid-template-columns: 1fr; } }
 `;
+
+function pdfShell(title, body) {
+  return `<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<link rel="stylesheet" href="${KATEX_CSS}">
+<style>${PDF_CSS}</style></head><body>
+<div class="noprint">Xem trước — khi ưng ý hãy bấm
+  <button onclick="window.print()">🖨 In / Lưu PDF</button>
+</div>
+${body}
+</body></html>`;
+}
+
+function renderInto(win, html) {
+  if (!win || win.closed) throw new Error('POPUP_BLOCKED');
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
 
 // Dựng HTML phần thân ĐỀ BÀI (dùng chung cho mọi mã đề, ngắt trang giữa các mã)
 function examBodyHtml(exam, variants) {
@@ -270,7 +299,7 @@ function examBodyHtml(exam, variants) {
           `<div><b>${op.label}.</b> ${latexToHtml(op.text || '')}</div>`).join('')}</div>` : ''}
       </div>`).join('')}
     <div style="text-align:center;margin-top:18px"><b>---------- HẾT ----------</b></div>
-  `).join('<div class="html2pdf__page-break"></div>');
+  `).join('<div class="pagebreak"></div>');
 }
 
 // Dựng HTML phần thân ĐÁP ÁN + LỜI GIẢI
@@ -292,43 +321,16 @@ function answersBodyHtml(exam, variants) {
         ${q.solution ? `<div class="sol"><i>Lời giải:</i> ${latexToHtml(q.solution)}
           ${(q.solutionImages || []).map(s => `<img src="${s}" crossorigin="anonymous">`).join('')}</div>` : ''}
       </div>`).join('')}
-  `).join('<div class="html2pdf__page-break"></div>');
+  `).join('<div class="pagebreak"></div>');
 }
 
-// Render HTML ẩn ngoài màn hình → file PDF tải về
-async function htmlToPdfFile(bodyHtml, filename) {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;background:#fff;';
-  wrap.innerHTML = `<style>${PDF_CSS}</style><div class="pdfx">${bodyHtml}</div>`;
-  document.body.appendChild(wrap);
-  // Chờ toàn bộ ảnh (Cloudinary) tải xong trước khi chụp
-  await Promise.all([...wrap.querySelectorAll('img')].map(img =>
-    img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })));
-  try {
-    await html2pdf().set({
-      margin: [12, 12, 14, 12],
-      filename,
-      pagebreak: { mode: ['css', 'legacy'] },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(wrap.querySelector('.pdfx')).save();
-  } finally {
-    wrap.remove();
-  }
+
+// Mở tab XEM + IN file ĐỀ BÀI (win phải được window.open ngay khi bấm nút)
+export function exportPdfExam(exam, variants, win) {
+  renderInto(win, pdfShell(`${exam.title || 'Đề thi'} — Đề bài`, examBodyHtml(exam, variants)));
 }
 
-// Tải file PDF ĐỀ BÀI
-export async function exportPdfExam(exam, variants) {
-  await htmlToPdfFile(examBodyHtml(exam, variants), `${safeName(exam.title)}-DE-BAI.pdf`);
-}
-
-// Tải file PDF ĐÁP ÁN + LỜI GIẢI
-export async function exportPdfAnswers(exam, variants) {
-  await htmlToPdfFile(answersBodyHtml(exam, variants), `${safeName(exam.title)}-DAP-AN.pdf`);
-}
-
-// Tải cả 2 file PDF: đề + đáp án (giống nút Word)
-export async function exportPdf(exam, variants) {
-  await exportPdfExam(exam, variants);
-  await exportPdfAnswers(exam, variants);
+// Mở tab XEM + IN file ĐÁP ÁN + LỜI GIẢI
+export function exportPdfAnswers(exam, variants, win) {
+  renderInto(win, pdfShell(`${exam.title || 'Đề thi'} — Đáp án`, answersBodyHtml(exam, variants)));
 }
