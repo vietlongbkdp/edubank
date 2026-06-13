@@ -3,7 +3,7 @@
 // Mỗi định dạng tách 2 file: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
 import {
   Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell,
-  WidthType, BorderStyle, TableLayoutType
+  WidthType, BorderStyle, TableLayoutType, PageBreak
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { latexToHtml } from '../components/Latex';
@@ -161,83 +161,53 @@ const docStyles = {
 
 const safeName = (s) => (s || 'de-thi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^\w ]/g, '').trim().replace(/ +/g, '-');
 
-/* ============ WORD: file ĐỀ BÀI ============ */
-export async function exportWordExam(exam, variants) {
-  const sections = variants.map(v => ({
-    properties: {},
-    children: [
-      ...headerToDocx(exam.header),
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120 }, children: [T(exam.title?.toUpperCase() || 'ĐỀ THI', { bold: true, size: 30 })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [T(`Thời gian làm bài: ${exam.duration} phút — Mã đề: ${v.code}`, { italics: true, size: 24 })] }),
-      new Paragraph({ text: '' }),
-      ...v.questions.flatMap((q, i) => {
-        const out = [new Paragraph({
-          spacing: { before: 180 },
-          children: [T(`Câu ${i + 1}. `, { bold: true }), ...latexRuns(q.content)]
-        })];
-        if (q.options?.length) out.push(optionsTable(q.options));
-        return out;
-      }),
-      new Paragraph({ text: '' }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [T('---------- HẾT ----------', { bold: true })] })
-    ]
-  }));
-  const blob = await Packer.toBlob(new Document({ styles: docStyles, sections }));
-  saveAs(blob, `${safeName(exam.title)}-DE-BAI.docx`);
-}
+/* ============ WORD: 1 FILE = ĐỀ BÀI + ngắt trang + ĐÁP ÁN & LỜI GIẢI ============ */
+export async function exportWord(exam, variants) {
+  const sections = variants.map((v, vi) => {
+    const children = [];
 
-/* ============ WORD: file ĐÁP ÁN + LỜI GIẢI ============ */
-export async function exportWordAnswers(exam, variants) {
-  const sections = variants.map(v => {
-    // Bảng đáp án nhanh: 5 câu mỗi dòng
-    const keyLines = [];
+    // ---- PHẦN 1: ĐỀ BÀI ----
+    children.push(...headerToDocx(exam.header));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120 }, children: [T(exam.title?.toUpperCase() || 'ĐỀ THI', { bold: true, size: 30 })] }));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [T(`Thời gian làm bài: ${exam.duration} phút — Mã đề: ${v.code}`, { italics: true, size: 24 })] }));
+    children.push(new Paragraph({ text: '' }));
+    v.questions.forEach((q, i) => {
+      children.push(new Paragraph({ spacing: { before: 180 }, children: [T(`Câu ${i + 1}. `, { bold: true }), ...latexRuns(q.content)] }));
+      if (q.options?.length) children.push(optionsTable(q.options));
+    });
+    children.push(new Paragraph({ text: '' }));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [T('---------- HẾT ----------', { bold: true })] }));
+
+    // ---- NGẮT TRANG ----
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ---- PHẦN 2: ĐÁP ÁN + LỜI GIẢI ----
+    children.push(...headerToDocx(exam.header));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120 }, children: [T(`ĐÁP ÁN VÀ LỜI GIẢI — MÃ ĐỀ ${v.code}`, { bold: true, size: 30 })] }));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [T(exam.title || '', { italics: true, size: 24 })] }));
+    children.push(new Paragraph({ text: '' }));
+    children.push(new Paragraph({ children: [T('I. BẢNG ĐÁP ÁN', { bold: true })] }));
     for (let r = 0; r < v.questions.length; r += 5) {
-      keyLines.push(new Paragraph({
+      children.push(new Paragraph({
         children: v.questions.slice(r, r + 5).flatMap((q, j) => [
           T(`Câu ${r + j + 1}: `, { bold: true }),
           T(`${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(',') : q.correctAnswer || '—'}      `)
         ])
       }));
     }
-    return {
-      properties: {},
-      children: [
-        ...headerToDocx(exam.header),
-        new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120 }, children: [T(`ĐÁP ÁN VÀ LỜI GIẢI — MÃ ĐỀ ${v.code}`, { bold: true, size: 30 })] }),
-        new Paragraph({ alignment: AlignmentType.CENTER, children: [T(exam.title || '', { italics: true, size: 24 })] }),
-        new Paragraph({ text: '' }),
-        new Paragraph({ children: [T('I. BẢNG ĐÁP ÁN', { bold: true })] }),
-        ...keyLines,
-        new Paragraph({ text: '' }),
-        new Paragraph({ children: [T('II. LỜI GIẢI CHI TIẾT', { bold: true })] }),
-        ...v.questions.flatMap((q, i) => {
-          const out = [new Paragraph({
-            spacing: { before: 180 },
-            children: [
-              T(`Câu ${i + 1}. `, { bold: true }),
-              ...latexRuns(q.content)
-            ]
-          }),
-          new Paragraph({
-            children: [
-              T('Đáp án: ', { bold: true }),
-              T(`${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}`, { bold: true })
-            ]
-          })];
-          if (q.solution) out.push(new Paragraph({ children: [T('Lời giải: ', { italics: true }), ...latexRuns(q.solution)] }));
-          return out;
-        })
-      ]
-    };
+    children.push(new Paragraph({ text: '' }));
+    children.push(new Paragraph({ children: [T('II. LỜI GIẢI CHI TIẾT', { bold: true })] }));
+    v.questions.forEach((q, i) => {
+      children.push(new Paragraph({ spacing: { before: 180 }, children: [T(`Câu ${i + 1}. `, { bold: true }), ...latexRuns(q.content)] }));
+      children.push(new Paragraph({ children: [T('Đáp án: ', { bold: true }), T(`${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}`, { bold: true })] }));
+      if (q.solution) children.push(new Paragraph({ children: [T('Lời giải: ', { italics: true }), ...latexRuns(q.solution)] }));
+    });
+
+    // Mỗi mã đề (nếu nhiều) là 1 section riêng, tự sang trang mới
+    return { properties: vi > 0 ? { type: 'nextPage' } : {}, children };
   });
   const blob = await Packer.toBlob(new Document({ styles: docStyles, sections }));
-  saveAs(blob, `${safeName(exam.title)}-DAP-AN.docx`);
-}
-
-// Tải cả 2 file Word: đề + đáp án
-export async function exportWord(exam, variants) {
-  await exportWordExam(exam, variants);
-  await exportWordAnswers(exam, variants);
+  saveAs(blob, `${safeName(exam.title)}.docx`);
 }
 
 /* ============ PDF: cửa sổ XEM TRƯỚC + IN ============
@@ -334,12 +304,10 @@ function answersBodyHtml(exam, variants) {
 }
 
 
-// Mở trang XEM + IN file ĐỀ BÀI
-export function exportPdfExam(exam, variants) {
-  openHtml(pdfShell(`${exam.title || 'Đề thi'} — Đề bài`, examBodyHtml(exam, variants)));
-}
-
-// Mở trang XEM + IN file ĐÁP ÁN + LỜI GIẢI
-export function exportPdfAnswers(exam, variants) {
-  openHtml(pdfShell(`${exam.title || 'Đề thi'} — Đáp án`, answersBodyHtml(exam, variants)));
+// Mở trang XEM + IN: gồm ĐỀ BÀI + ngắt trang + ĐÁP ÁN & LỜI GIẢI trong cùng 1 file
+export function exportPdf(exam, variants) {
+  const body = examBodyHtml(exam, variants)
+    + '<div class="pagebreak"></div>'
+    + answersBodyHtml(exam, variants);
+  openHtml(pdfShell(exam.title || 'Đề thi', body));
 }

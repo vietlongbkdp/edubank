@@ -7,7 +7,7 @@ export default function StatCard({ icon, label, value, color = '#4F46E5', sub })
       <CardContent>
         <Stack direction="row" spacing={2} alignItems="center">
           <Box sx={{
-            width: 52, height: 52, borderRadius: 3, display: 'grid', placeItems: 'center',
+            width: 52, height: 52, borderRadius: 2, display: 'grid', placeItems: 'center',
             bgcolor: `${color}1A`, color, fontSize: 22
           }}>
             <FontAwesomeIcon icon={icon} />

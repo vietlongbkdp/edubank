@@ -13,7 +13,7 @@ export const buildTheme = (mode) => createTheme({
       ? { default: '#F6F7FB', paper: '#FFFFFF' }
       : { default: '#0F1222', paper: '#171A2E' }
   },
-  shape: { borderRadius: 14 },
+  shape: { borderRadius: 8 },
   typography: {
     fontFamily: '"Be Vietnam Pro", system-ui, sans-serif',
     h4: { fontWeight: 800 },
@@ -25,13 +25,17 @@ export const buildTheme = (mode) => createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: mode === 'light' ? '0 4px 20px rgba(79,70,229,.07)' : '0 4px 20px rgba(0,0,0,.4)',
-          transition: 'transform .18s ease, box-shadow .18s ease'
+          borderRadius: 10,
+          boxShadow: mode === 'light' ? '0 2px 10px rgba(15,18,34,.06)' : '0 2px 10px rgba(0,0,0,.35)',
+          transition: 'transform .18s ease, box-shadow .18s ease, border-color .18s ease',
+          border: mode === 'light' ? '1px solid #ECECF3' : '1px solid #262A40'
         }
       }
     },
-    MuiButton: { styleOverrides: { root: { borderRadius: 12 } } },
-    MuiChip: { styleOverrides: { root: { fontWeight: 600 } } }
+    MuiButton: { styleOverrides: { root: { borderRadius: 8 } } },
+    MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 6 } } },
+    // Card: bo góc nhỏ hơn + hiệu ứng hover nổi bật để phân biệt các đối tượng
+    MuiPaper: { styleOverrides: { rounded: { borderRadius: 10 } } }
   }
 });
 

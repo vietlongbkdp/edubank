@@ -27,10 +27,10 @@ export default function Login() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: GRADIENT, p: 2 }}>
-      <Card sx={{ width: '100%', maxWidth: 420, borderRadius: 5 }}>
+      <Card sx={{ width: '100%', maxWidth: 420, borderRadius: 2 }}>
         <CardContent sx={{ p: 4 }}>
           <Stack alignItems="center" spacing={1} sx={{ mb: 3 }}>
-            <Box sx={{ width: 52, height: 52, borderRadius: 3, background: GRADIENT, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 24 }}>
+            <Box sx={{ width: 52, height: 52, borderRadius: 2, background: GRADIENT, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 24 }}>
               <FontAwesomeIcon icon={faGraduationCap} />
             </Box>
             <Typography variant="h5">Đăng nhập EduBank</Typography>

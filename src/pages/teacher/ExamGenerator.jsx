@@ -10,7 +10,7 @@ import { useSnackbar } from 'notistack';
 import client, { apiMsg } from '../../api/client';
 import { SUBJECTS, GRADES, TOPICS, diffColor, diffLabel } from '../../utils/constants';
 import QuestionView from '../../components/QuestionView';
-import { makeVariants, exportWordExam, exportWordAnswers, exportPdfExam, exportPdfAnswers } from '../../utils/exportExam';
+import { makeVariants, exportWord, exportPdf } from '../../utils/exportExam';
 import RichTextEditor from '../../components/RichTextEditor';
 import { GRADIENT } from '../../theme';
 
@@ -89,12 +89,8 @@ export default function ExamGenerator() {
   const doExport = (kind) => {
     try {
       const variants = getVariants();
-      // Word: tải file .docx về máy
-      if (kind === 'word-exam') return exportWordExam(examMeta, variants);
-      if (kind === 'word-answers') return exportWordAnswers(examMeta, variants);
-      // PDF: mở trang xem trước (tab mới nếu được, không thì cùng tab)
-      if (kind === 'pdf-exam') exportPdfExam(examMeta, variants);
-      else exportPdfAnswers(examMeta, variants);
+      if (kind === 'word') return exportWord(examMeta, variants); // 1 file: đề + ngắt trang + đáp án
+      exportPdf(examMeta, variants); // mở xem: đề + ngắt trang + đáp án
     } catch (e) {
       console.error(e);
       enqueueSnackbar('Xuất file thất bại', { variant: 'error' });
@@ -220,24 +216,14 @@ export default function ExamGenerator() {
                         onClick={saveExam} disabled={busy || !!result.saved}>
                         {result.saved ? 'Đã lưu' : 'Lưu đề'}
                       </Button>
-                      <Tooltip title="Tải file Word đề bài">
-                        <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word-exam')}>
-                          Word đề
+                      <Tooltip title="Tải file Word (đề bài + đáp án, ngắt trang riêng)">
+                        <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word')}>
+                          Tải Word
                         </Button>
                       </Tooltip>
-                      <Tooltip title="Tải file Word đáp án & lời giải">
-                        <Button variant="outlined" color="success" startIcon={<FontAwesomeIcon icon={faFileWord} />} onClick={() => doExport('word-answers')}>
-                          Word đáp án
-                        </Button>
-                      </Tooltip>
-                      <Tooltip title="Xem trước & in PDF đề bài">
-                        <Button variant="outlined" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf-exam')}>
-                          PDF đề
-                        </Button>
-                      </Tooltip>
-                      <Tooltip title="Xem trước & in PDF đáp án & lời giải">
-                        <Button variant="outlined" color="success" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf-answers')}>
-                          PDF đáp án
+                      <Tooltip title="Xem & in PDF (đề bài + đáp án, ngắt trang riêng)">
+                        <Button variant="outlined" color="error" startIcon={<FontAwesomeIcon icon={faFilePdf} />} onClick={() => doExport('pdf')}>
+                          Xem/In PDF
                         </Button>
                       </Tooltip>
                     </Stack>

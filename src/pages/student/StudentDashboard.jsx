@@ -53,7 +53,8 @@ export default function StudentDashboard() {
                   {recent.map(t => (
                     <Stack key={t.id} component={Link} to={`/hs/ket-qua/${t.id}`}
                       direction="row" justifyContent="space-between" alignItems="center"
-                      sx={{ p: 1.5, borderRadius: 3, bgcolor: 'action.hover', textDecoration: 'none', color: 'inherit' }}>
+                      sx={{ p: 1.5, borderRadius: 1.5, bgcolor: 'action.hover', textDecoration: 'none', color: 'inherit',
+                        transition: 'all .15s ease', '&:hover': { bgcolor: 'primary.main', '& *': { color: '#fff' }, transform: 'translateX(3px)' } }}>
                       <Box>
                         <Typography fontWeight={600} variant="body2">{t.title}</Typography>
                         <Typography variant="caption" color="text.secondary">{dayjs(t.date).format('HH:mm DD/MM/YYYY')}</Typography>

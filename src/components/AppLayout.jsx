@@ -61,8 +61,9 @@ export default function AppLayout({ mode, toggleMode }) {
             key={m.to} component={NavLink} to={m.to} end={m.end}
             onClick={() => setOpen(false)}
             sx={{
-              borderRadius: 3, mb: .5,
-              '&.active': { background: GRADIENT, color: '#fff', '& .MuiListItemIcon-root': { color: '#fff' } }
+              borderRadius: 1.5, mb: .5, transition: 'all .15s ease',
+              '&:hover': { bgcolor: 'action.hover', transform: 'translateX(3px)' },
+              '&.active': { background: GRADIENT, color: '#fff', boxShadow: '0 4px 12px rgba(79,70,229,.35)', '& .MuiListItemIcon-root': { color: '#fff' } }
             }}
           >
             <ListItemIcon sx={{ minWidth: 38 }}><FontAwesomeIcon icon={m.icon} /></ListItemIcon>

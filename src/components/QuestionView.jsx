@@ -41,7 +41,7 @@ export default function QuestionView({
                 key={op.label} variant="outlined" onClick={() => toggle(op.label)}
                 sx={{
                   p: 1, px: 1.5, display: 'flex', alignItems: 'center', gap: 1,
-                  cursor: readOnly ? 'default' : 'pointer', borderRadius: 3,
+                  cursor: readOnly ? 'default' : 'pointer', borderRadius: 1.5,
                   borderColor: showAnswer ? (isCor ? 'success.main' : isSel ? 'error.main' : 'divider')
                     : isSel ? 'primary.main' : 'divider',
                   bgcolor: showAnswer && isCor ? 'success.main' + '14'
@@ -70,7 +70,7 @@ export default function QuestionView({
       )}
 
       {showAnswer && (
-        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 3, bgcolor: 'success.main' + '0D', border: 1, borderColor: 'success.main' + '40' }}>
+        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 1.5, bgcolor: 'success.main' + '0D', border: 1, borderColor: 'success.main' + '40' }}>
           <Typography variant="body2" fontWeight={700} color="success.main">
             Đáp án đúng: {correctArr.join(', ') || q.correctAnswer}
           </Typography>

@@ -34,7 +34,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   };
 
   return (
-    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
+    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, overflow: 'hidden' }}>
       <Stack direction="row" spacing={.3} alignItems="center"
         sx={{ px: 1, py: .5, bgcolor: 'action.hover', flexWrap: 'wrap' }}>
         {TOOLS.map((t, i) => t === null

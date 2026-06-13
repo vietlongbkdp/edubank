@@ -105,7 +105,7 @@ export default function TeacherDashboard() {
               ) : (
                 <Stack spacing={1.5}>
                   {stats.mismatched.map(q => (
-                    <Box key={q._id} sx={{ p: 1.5, borderRadius: 3, bgcolor: 'action.hover' }}>
+                    <Box key={q._id} sx={{ p: 1.5, borderRadius: 1.5, bgcolor: 'action.hover' }}>
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Chip size="small" label={q.code} />
                         <Chip size="small" label={`Gán mức ${q.difficulty}`} sx={{ bgcolor: diffColor(q.difficulty), color: '#fff' }} />

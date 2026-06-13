@@ -96,7 +96,9 @@ export default function TeacherExams() {
             <Grid container spacing={2}>
               {data.exams.map(exam => (
                 <Grid item xs={12} sm={6} key={exam._id}>
-                  <Card sx={{ height: '100%', '&:hover': { transform: 'translateY(-3px)' } }}>
+                  <Card sx={{ height: '100%', borderLeft: 4,
+                    borderLeftColor: exam.hasPassword ? 'warning.main' : 'success.main', transition: 'all .18s ease',
+                    '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 10px 28px rgba(79,70,229,.18)' } }}>
                     <CardContent>
                       <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                         <Chip size="small"

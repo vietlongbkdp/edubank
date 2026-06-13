@@ -34,7 +34,7 @@ export default function Register() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: GRADIENT, p: 2 }}>
-      <Card sx={{ width: '100%', maxWidth: 460, borderRadius: 5 }}>
+      <Card sx={{ width: '100%', maxWidth: 460, borderRadius: 2 }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h5" textAlign="center" gutterBottom>Tạo tài khoản EduBank</Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -44,10 +44,10 @@ export default function Register() {
                 exclusive fullWidth value={form.role}
                 onChange={(_, v) => v && setForm({ ...form, role: v })}
               >
-                <ToggleButton value="teacher" sx={{ gap: 1, borderRadius: 3 }}>
+                <ToggleButton value="teacher" sx={{ gap: 1, borderRadius: 1.5 }}>
                   <FontAwesomeIcon icon={faChalkboardUser} /> Giáo viên
                 </ToggleButton>
-                <ToggleButton value="student" sx={{ gap: 1, borderRadius: 3 }}>
+                <ToggleButton value="student" sx={{ gap: 1, borderRadius: 1.5 }}>
                   <FontAwesomeIcon icon={faUserGraduate} /> Học sinh
                 </ToggleButton>
               </ToggleButtonGroup>

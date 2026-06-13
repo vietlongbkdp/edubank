@@ -11,7 +11,7 @@ import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import client, { apiMsg } from '../../api/client';
 import QuestionView from '../../components/QuestionView';
-import { makeVariants, exportWordExam, exportWordAnswers, exportPdfExam, exportPdfAnswers } from '../../utils/exportExam';
+import { makeVariants, exportWord, exportPdf } from '../../utils/exportExam';
 
 export default function ExamList() {
   const { enqueueSnackbar } = useSnackbar();
@@ -61,10 +61,8 @@ export default function ExamList() {
       const full = data.data;
       const variants = makeVariants(full.questionIds, Number(variantCount) || 1,
         { shuffleQuestions: variantCount > 1, shuffleOptions: variantCount > 1 });
-      if (kind === 'word-exam') await exportWordExam(full, variants);
-      else if (kind === 'word-answers') await exportWordAnswers(full, variants);
-      else if (kind === 'pdf-exam') exportPdfExam(full, variants);
-      else exportPdfAnswers(full, variants);
+      if (kind === 'word') await exportWord(full, variants); // 1 file: đề + ngắt trang + đáp án
+      else exportPdf(full, variants);
     } catch (e) {
       console.error(e);
       enqueueSnackbar(apiMsg(e, 'Xuất file thất bại'), { variant: 'error' });
@@ -91,7 +89,11 @@ export default function ExamList() {
         <Grid container spacing={2}>
           {exams.map(exam => (
             <Grid item xs={12} sm={6} lg={4} key={exam._id}>
-              <Card sx={{ height: '100%', '&:hover': { transform: 'translateY(-3px)' } }}>
+              <Card sx={{
+                height: '100%', borderLeft: 4, borderLeftColor: 'primary.main',
+                transition: 'all .18s ease',
+                '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 10px 28px rgba(79,70,229,.18)', borderLeftColor: 'secondary.main' }
+              }}>
                 <CardContent>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                     <Stack direction="row" spacing={.5} flexWrap="wrap" useFlexGap>
@@ -113,17 +115,11 @@ export default function ExamList() {
                   </Stack>
                   <Stack direction="row" spacing={.5} sx={{ mt: 2 }}>
                     <Tooltip title="Xem đề"><IconButton onClick={() => openDetail(exam._id)}><FontAwesomeIcon icon={faEye} /></IconButton></Tooltip>
-                    <Tooltip title="Tải Word đề bài">
-                      <IconButton onClick={() => doExport(exam, 'word-exam')}><FontAwesomeIcon icon={faFileWord} /></IconButton>
+                    <Tooltip title="Tải Word (đề bài + đáp án, ngắt trang)">
+                      <IconButton onClick={() => doExport(exam, 'word')}><FontAwesomeIcon icon={faFileWord} /></IconButton>
                     </Tooltip>
-                    <Tooltip title="Tải Word đáp án & lời giải">
-                      <IconButton color="success" onClick={() => doExport(exam, 'word-answers')}><FontAwesomeIcon icon={faFileWord} /></IconButton>
-                    </Tooltip>
-                    <Tooltip title="Xem & in PDF đề bài">
-                      <IconButton onClick={() => doExport(exam, 'pdf-exam')}><FontAwesomeIcon icon={faFilePdf} /></IconButton>
-                    </Tooltip>
-                    <Tooltip title="Xem & in PDF đáp án & lời giải">
-                      <IconButton color="success" onClick={() => doExport(exam, 'pdf-answers')}><FontAwesomeIcon icon={faFilePdf} /></IconButton>
+                    <Tooltip title="Xem & in PDF (đề bài + đáp án, ngắt trang)">
+                      <IconButton color="error" onClick={() => doExport(exam, 'pdf')}><FontAwesomeIcon icon={faFilePdf} /></IconButton>
                     </Tooltip>
                     <Tooltip title="Chia sẻ & khóa đề">
                       <IconButton color={exam.visibility === 'public' ? 'success' : 'default'}

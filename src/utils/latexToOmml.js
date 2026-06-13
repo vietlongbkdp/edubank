@@ -14,8 +14,12 @@ function texToOmml(tex, display = false) {
     if (!m) return null;
     // Bỏ thẻ <annotation>...</annotation> (mathml2omml không hỗ trợ, gây cảnh báo)
     let clean = m[0].replace(/<annotation[\s\S]*?<\/annotation>/g, '').replace(/<semantics>|<\/semantics>/g, '');
-    const omml = mml2omml(clean);
-    return omml || null;
+    let omml = mml2omml(clean);
+    if (!omml) return null;
+    // BẮT BUỘC bỏ khai báo xmlns thừa — nếu giữ, khi docx gộp nhiều công thức sẽ tạo XML
+    // không hợp lệ khiến Word báo lỗi không mở được file. Namespace m:/w: đã khai báo ở cấp document.
+    omml = omml.replace(/ xmlns:m="[^"]*"/g, '').replace(/ xmlns:w="[^"]*"/g, '');
+    return omml;
   } catch { return null; }
 }
 

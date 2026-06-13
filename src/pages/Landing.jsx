@@ -109,7 +109,7 @@ export default function Landing() {
             <Grid item xs={12} sm={6} md={4} key={f.title}>
               <Card sx={{ height: '100%', '&:hover': { transform: 'translateY(-4px)' } }}>
                 <CardContent>
-                  <Box sx={{ width: 48, height: 48, borderRadius: 3, background: GRADIENT, color: '#fff', display: 'grid', placeItems: 'center', mb: 2 }}>
+                  <Box sx={{ width: 48, height: 48, borderRadius: 2, background: GRADIENT, color: '#fff', display: 'grid', placeItems: 'center', mb: 2 }}>
                     <FontAwesomeIcon icon={f.icon} />
                   </Box>
                   <Typography variant="h6" gutterBottom>{f.title}</Typography>
