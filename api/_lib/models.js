@@ -13,7 +13,26 @@ const userSchema = new Schema({
   grade: String,
   bio: String,
   teacherCode: { type: String, index: true },  // mã GV để học sinh tra cứu đề, vd GV-A1B2C3
-  isLocked: { type: Boolean, default: false }
+  isLocked: { type: Boolean, default: false }, // giữ để tương thích cũ; 'blocked' là cách mới
+  // Trạng thái tài khoản: active (hoạt động) | deactive (tạm ngưng, cần đóng phí) | blocked (bị khóa bởi admin)
+  status: { type: String, enum: ['active', 'deactive', 'blocked'], default: 'active', index: true },
+  // Sau khi admin reset mật khẩu, buộc người dùng đổi mật khẩu mới trước khi dùng tiếp
+  mustChangePassword: { type: Boolean, default: false },
+  // GV đã đóng phí tới thời điểm này (tùy chọn dùng cho gia hạn)
+  paidUntil: Date
+}, { timestamps: true });
+
+// ===== Cấu hình hệ thống (singleton do admin quản lý) =====
+const settingSchema = new Schema({
+  key: { type: String, unique: true, index: true },
+  // Số bộ đề tối thiểu khiến GV phải đóng phí (chuyển sang deactive)
+  teacherExamLimit: { type: Number, default: 3 },
+  // Cấu hình thanh toán SePay / VietQR
+  payAmount: { type: Number, default: 200000 },          // số tiền phí (VND)
+  bankAccount: { type: String, default: '' },            // số tài khoản nhận
+  bankName: { type: String, default: '' },               // mã ngân hàng (vd VPB, MB, VCB)
+  bankAccountName: { type: String, default: '' },        // tên chủ tài khoản
+  payPrefix: { type: String, default: 'EDUBANK' }        // tiền tố nội dung chuyển khoản
 }, { timestamps: true });
 
 // ===== Câu hỏi — đối tượng trung tâm =====
@@ -81,6 +100,7 @@ const attemptSchema = new Schema({
 }, { timestamps: true });
 
 export const User = models.User || model('User', userSchema);
+export const Setting = models.Setting || model('Setting', settingSchema);
 export const Question = models.Question || model('Question', questionSchema);
 export const Exam = models.Exam || model('Exam', examSchema);
 export const Attempt = models.Attempt || model('Attempt', attemptSchema);

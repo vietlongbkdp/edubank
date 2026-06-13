@@ -38,6 +38,16 @@ export function AuthProvider({ children }) {
     setUser(u);
   };
 
+  // Lấy lại hồ sơ mới nhất từ server (vd sau khi thanh toán, admin đổi trạng thái)
+  const refreshUser = async () => {
+    try {
+      const { data } = await client.get('/users');
+      const fresh = { ...user, ...data.data };
+      updateUser(fresh);
+      return fresh;
+    } catch { return user; }
+  };
+
   const logout = () => {
     localStorage.removeItem('edubank_token');
     localStorage.removeItem('edubank_user');
@@ -45,7 +55,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, loginGoogle, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, register, loginGoogle, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

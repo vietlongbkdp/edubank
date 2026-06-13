@@ -1,5 +1,6 @@
 // Tạo đề tự động theo ma trận độ khó 1-10
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Button, Card, CardContent, Grid, MenuItem, TextField, Typography, Stack,
   Alert, Chip, Divider, IconButton, Tooltip, FormControlLabel, Checkbox
@@ -16,6 +17,7 @@ import { GRADIENT } from '../../theme';
 
 export default function ExamGenerator() {
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({ subject: 'Toán', grade: '12', topics: [] });
   const [source, setSource] = useState('both');
   const [matrix, setMatrix] = useState(Object.fromEntries([...Array(10)].map((_, i) => [i + 1, 0])));
@@ -72,8 +74,13 @@ export default function ExamGenerator() {
         accessPassword: meta.shared ? meta.accessPassword.trim() : '',
         header: meta.header
       });
-      setResult({ ...result, saved: data.data });
-      enqueueSnackbar('Đã lưu đề vào "Đề thi của tôi"', { variant: 'success' });
+      setResult({ ...result, saved: data.data.exam || data.data });
+      if (data.data.requirePayment) {
+        enqueueSnackbar('Bạn đã đạt số bộ đề miễn phí. Vui lòng đóng phí để tiếp tục.', { variant: 'warning' });
+        setTimeout(() => navigate('/thanh-toan'), 1200);
+      } else {
+        enqueueSnackbar('Đã lưu đề vào "Đề thi của tôi"', { variant: 'success' });
+      }
     } catch (e) { enqueueSnackbar(apiMsg(e), { variant: 'error' }); }
     finally { setBusy(false); }
   };

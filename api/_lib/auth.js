@@ -1,5 +1,13 @@
 import jwt from 'jsonwebtoken';
 
+// Sinh mật khẩu ngẫu nhiên 8 ký tự (chữ hoa, thường, số) cho admin reset
+export function genPassword(len = 8) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let s = '';
+  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
 export function signToken(user) {
   return jwt.sign(
     { id: user._id, role: user.role, fullName: user.fullName },

@@ -20,17 +20,23 @@ export default function Login() {
     setError(''); setLoading(true);
     try {
       const user = await login(form.email, form.password);
-      navigate(user.role === 'teacher' ? '/gv' : user.role === 'admin' ? '/admin' : '/hs');
+      redirectAfterLogin(user);
     } catch (err) {
       setError(apiMsg(err, 'Đăng nhập thất bại'));
     } finally { setLoading(false); }
+  };
+
+  const redirectAfterLogin = (user) => {
+    if (user.mustChangePassword) return navigate('/doi-mat-khau');
+    if (user.role === 'teacher' && user.status === 'deactive') return navigate('/thanh-toan');
+    navigate(user.role === 'teacher' ? '/gv' : user.role === 'admin' ? '/admin' : '/hs');
   };
 
   const handleGoogle = async (credential) => {
     setError(''); setLoading(true);
     try {
       const user = await loginGoogle(credential);
-      navigate(user.role === 'teacher' ? '/gv' : user.role === 'admin' ? '/admin' : '/hs');
+      redirectAfterLogin(user);
     } catch (err) {
       setError(apiMsg(err, 'Đăng nhập Google thất bại'));
     } finally { setLoading(false); }

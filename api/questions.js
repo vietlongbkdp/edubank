@@ -24,6 +24,7 @@ export default async function handler(req, res) {
       const q = {};
       if (scope === 'mine') q.createdBy = auth.id;
       else if (scope === 'public') q.isPublic = true;
+      else if (scope === 'all' && auth.role === 'admin') { /* admin xem toàn bộ câu hỏi */ }
       else if (scope === 'all') q.$or = [{ createdBy: auth.id }, { isPublic: true }];
       if (subject) q.subject = subject;
       if (grade) q.grade = grade;
@@ -75,12 +76,13 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
-      const q = await Question.findById(req.query.id);
-      if (!q) return err(res, 404, 'Không tìm thấy câu hỏi');
-      if (String(q.createdBy) !== auth.id && auth.role !== 'admin')
-        return err(res, 403, 'Bạn chỉ xóa được câu hỏi của mình');
-      await q.deleteOne();
-      return ok(res, null, 'Đã xóa câu hỏi');
+      // Xóa nhiều: body.ids (admin xóa bất kỳ; GV chỉ xóa câu của mình)
+      const ids = req.body?.ids || (req.query.id ? [req.query.id] : []);
+      if (!ids.length) return err(res, 400, 'Thiếu id');
+      const filter = { _id: { $in: ids } };
+      if (auth.role !== 'admin') filter.createdBy = auth.id;
+      const r = await Question.deleteMany(filter);
+      return ok(res, { deleted: r.deletedCount }, `Đã xóa ${r.deletedCount} câu hỏi`);
     }
 
     return err(res, 405, 'Method không hỗ trợ');

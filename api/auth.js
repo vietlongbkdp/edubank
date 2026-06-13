@@ -8,7 +8,8 @@ import { ok, err } from './_lib/respond.js';
 const publicUser = (u) => ({
   _id: u._id, fullName: u.fullName, email: u.email, role: u.role,
   avatarUrl: u.avatarUrl, school: u.school, subjectsTaught: u.subjectsTaught,
-  grade: u.grade, bio: u.bio, teacherCode: u.teacherCode
+  grade: u.grade, bio: u.bio, teacherCode: u.teacherCode,
+  status: u.status, mustChangePassword: u.mustChangePassword
 });
 
 // Sinh mã giáo viên duy nhất dạng GV-XXXXXX
@@ -31,7 +32,8 @@ export default async function handler(req, res) {
         fullName, email,
         passwordHash: await bcrypt.hash(password, 10),
         role: isTeacher ? 'teacher' : 'student', // admin chỉ tạo thủ công trong DB
-        teacherCode: isTeacher ? genTeacherCode() : undefined
+        teacherCode: isTeacher ? genTeacherCode() : undefined,
+        status: 'active' // cả GV lẫn HS mặc định active khi tạo
       });
       return ok(res, { token: signToken(user), user: publicUser(user) }, 'Đăng ký thành công');
     }
@@ -41,7 +43,9 @@ export default async function handler(req, res) {
       const user = await User.findOne({ email: (email || '').toLowerCase() });
       if (!user || !(await bcrypt.compare(password || '', user.passwordHash)))
         return err(res, 400, 'Email hoặc mật khẩu không đúng');
-      if (user.isLocked) return err(res, 403, 'Tài khoản đã bị khóa, liên hệ quản trị viên');
+      if (user.status === 'blocked' || user.isLocked)
+        return err(res, 403, 'Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên');
+      // deactive (GV cần đóng phí) vẫn cho đăng nhập; frontend sẽ chuyển hướng tới trang thanh toán
       return ok(res, { token: signToken(user), user: publicUser(user) }, 'Đăng nhập thành công');
     }
 
@@ -65,10 +69,11 @@ export default async function handler(req, res) {
           passwordHash: await bcrypt.hash(Math.random().toString(36) + Date.now(), 10), // mật khẩu ngẫu nhiên (đăng nhập qua Google)
           role: isTeacher ? 'teacher' : 'student',
           teacherCode: isTeacher ? genTeacherCode() : undefined,
-          avatarUrl: g.picture
+          avatarUrl: g.picture,
+          status: 'active'
         });
       } else {
-        if (user.isLocked) return err(res, 403, 'Tài khoản đã bị khóa, liên hệ quản trị viên');
+        if (user.status === 'blocked' || user.isLocked) return err(res, 403, 'Tài khoản đã bị khóa, liên hệ quản trị viên');
         // Cập nhật avatar Google nếu chưa có
         if (!user.avatarUrl && g.picture) { user.avatarUrl = g.picture; await user.save(); }
       }

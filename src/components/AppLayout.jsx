@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faGraduationCap, faGaugeHigh, faDatabase, faWandMagicSparkles, faFileLines,
   faChartLine, faPenToSquare, faUsers, faFlag, faBars, faMoon, faSun,
-  faRightFromBracket, faUser, faClockRotateLeft, faChalkboardUser
+  faRightFromBracket, faUser, faClockRotateLeft, faChalkboardUser, faGear
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import { GRADIENT } from '../theme';
@@ -32,7 +32,10 @@ const MENUS = {
   ],
   admin: [
     { to: '/admin', icon: faUsers, label: 'Người dùng', end: true },
-    { to: '/admin/bao-cao', icon: faFlag, label: 'Câu hỏi bị báo cáo' }
+    { to: '/admin/cau-hoi', icon: faDatabase, label: 'Quản lý câu hỏi' },
+    { to: '/admin/bo-de', icon: faFileLines, label: 'Quản lý bộ đề' },
+    { to: '/admin/bao-cao', icon: faFlag, label: 'Câu hỏi bị báo cáo' },
+    { to: '/admin/cau-hinh', icon: faGear, label: 'Cấu hình hệ thống' }
   ]
 };
 
