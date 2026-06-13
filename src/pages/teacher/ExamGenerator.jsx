@@ -92,14 +92,12 @@ export default function ExamGenerator() {
       // Word: tải file .docx về máy
       if (kind === 'word-exam') return exportWordExam(examMeta, variants);
       if (kind === 'word-answers') return exportWordAnswers(examMeta, variants);
-      // PDF: mở tab xem trước + in — cửa sổ PHẢI mở ngay trong sự kiện click (trước mọi await)
-      const win = window.open('', '_blank');
-      if (kind === 'pdf-exam') exportPdfExam(examMeta, variants, win);
-      else exportPdfAnswers(examMeta, variants, win);
+      // PDF: mở trang xem trước (tab mới nếu được, không thì cùng tab)
+      if (kind === 'pdf-exam') exportPdfExam(examMeta, variants);
+      else exportPdfAnswers(examMeta, variants);
     } catch (e) {
-      enqueueSnackbar(e.message === 'POPUP_BLOCKED'
-        ? 'Trình duyệt chặn cửa sổ mới — hãy cho phép pop-up cho trang này rồi thử lại'
-        : 'Xuất file thất bại', { variant: 'error' });
+      console.error(e);
+      enqueueSnackbar('Xuất file thất bại', { variant: 'error' });
     }
   };
 

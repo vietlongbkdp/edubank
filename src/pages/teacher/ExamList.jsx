@@ -56,8 +56,6 @@ export default function ExamList() {
   };
 
   const doExport = async (exam, kind) => {
-    // PDF: mở tab NGAY khi bấm (trước await) để không bị Safari/iOS chặn popup
-    const win = kind.startsWith('pdf') ? window.open('', '_blank') : null;
     try {
       const { data } = await client.get('/exams', { params: { id: exam._id, full: 1 } });
       const full = data.data;
@@ -65,13 +63,11 @@ export default function ExamList() {
         { shuffleQuestions: variantCount > 1, shuffleOptions: variantCount > 1 });
       if (kind === 'word-exam') await exportWordExam(full, variants);
       else if (kind === 'word-answers') await exportWordAnswers(full, variants);
-      else if (kind === 'pdf-exam') exportPdfExam(full, variants, win);
-      else exportPdfAnswers(full, variants, win);
+      else if (kind === 'pdf-exam') exportPdfExam(full, variants);
+      else exportPdfAnswers(full, variants);
     } catch (e) {
-      if (win && !win.closed) win.close();
-      enqueueSnackbar(e.message === 'POPUP_BLOCKED'
-        ? 'Trình duyệt chặn cửa sổ mới — hãy cho phép pop-up cho trang này rồi thử lại'
-        : apiMsg(e, 'Xuất file thất bại'), { variant: 'error' });
+      console.error(e);
+      enqueueSnackbar(apiMsg(e, 'Xuất file thất bại'), { variant: 'error' });
     }
   };
 

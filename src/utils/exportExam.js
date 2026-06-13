@@ -7,6 +7,7 @@ import {
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { latexToHtml } from '../components/Latex';
+import { latexRuns } from './latexToOmml';
 
 /* ============ Trộn mã đề ============ */
 function seededRandom(seed) {
@@ -144,7 +145,7 @@ function optionsTable(options) {
   const cell = (op) => new TableCell({
     borders: noBorder,
     width: { size: 4650, type: WidthType.DXA },
-    children: [new Paragraph({ children: [T(`${op.label}. `, { bold: true }), T(latexToWordText(op.text || ''))] })]
+    children: [new Paragraph({ children: [T(`${op.label}. `, { bold: true }), ...latexRuns(op.text || '')] })]
   });
   const emptyCell = () => new TableCell({ borders: noBorder, width: { size: 4650, type: WidthType.DXA }, children: [new Paragraph('')] });
   const rows = [];
@@ -172,7 +173,7 @@ export async function exportWordExam(exam, variants) {
       ...v.questions.flatMap((q, i) => {
         const out = [new Paragraph({
           spacing: { before: 180 },
-          children: [T(`Câu ${i + 1}. `, { bold: true }), T(latexToWordText(q.content))]
+          children: [T(`Câu ${i + 1}. `, { bold: true }), ...latexRuns(q.content)]
         })];
         if (q.options?.length) out.push(optionsTable(q.options));
         return out;
@@ -214,7 +215,7 @@ export async function exportWordAnswers(exam, variants) {
             spacing: { before: 180 },
             children: [
               T(`Câu ${i + 1}. `, { bold: true }),
-              T(latexToWordText(q.content))
+              ...latexRuns(q.content)
             ]
           }),
           new Paragraph({
@@ -223,7 +224,7 @@ export async function exportWordAnswers(exam, variants) {
               T(`${Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer || '—'}`, { bold: true })
             ]
           })];
-          if (q.solution) out.push(new Paragraph({ children: [T('Lời giải: ', { italics: true }), T(latexToWordText(q.solution))] }));
+          if (q.solution) out.push(new Paragraph({ children: [T('Lời giải: ', { italics: true }), ...latexRuns(q.solution)] }));
           return out;
         })
       ]
@@ -269,18 +270,26 @@ function pdfShell(title, body) {
 <title>${title}</title>
 <link rel="stylesheet" href="${KATEX_CSS}">
 <style>${PDF_CSS}</style></head><body>
-<div class="noprint">Xem trước — khi ưng ý hãy bấm
+<div class="noprint">
+  <button onclick="history.back()" style="background:#64748b">← Quay lại</button>
+  Xem trước — khi ưng ý hãy bấm
   <button onclick="window.print()">🖨 In / Lưu PDF</button>
 </div>
 ${body}
 </body></html>`;
 }
 
-function renderInto(win, html) {
-  if (!win || win.closed) throw new Error('POPUP_BLOCKED');
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+function openHtml(html) {
+  // Tạo Blob HTML và mở — không phụ thuộc document.write (ổn định hơn trên mọi trình duyệt)
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win && !win.closed) {
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return;
+  }
+  // Pop-up bị chặn → mở ngay trong tab hiện tại (người dùng bấm Back để quay lại)
+  window.location.href = url;
 }
 
 // Dựng HTML phần thân ĐỀ BÀI (dùng chung cho mọi mã đề, ngắt trang giữa các mã)
@@ -325,12 +334,12 @@ function answersBodyHtml(exam, variants) {
 }
 
 
-// Mở tab XEM + IN file ĐỀ BÀI (win phải được window.open ngay khi bấm nút)
-export function exportPdfExam(exam, variants, win) {
-  renderInto(win, pdfShell(`${exam.title || 'Đề thi'} — Đề bài`, examBodyHtml(exam, variants)));
+// Mở trang XEM + IN file ĐỀ BÀI
+export function exportPdfExam(exam, variants) {
+  openHtml(pdfShell(`${exam.title || 'Đề thi'} — Đề bài`, examBodyHtml(exam, variants)));
 }
 
-// Mở tab XEM + IN file ĐÁP ÁN + LỜI GIẢI
-export function exportPdfAnswers(exam, variants, win) {
-  renderInto(win, pdfShell(`${exam.title || 'Đề thi'} — Đáp án`, answersBodyHtml(exam, variants)));
+// Mở trang XEM + IN file ĐÁP ÁN + LỜI GIẢI
+export function exportPdfAnswers(exam, variants) {
+  openHtml(pdfShell(`${exam.title || 'Đề thi'} — Đáp án`, answersBodyHtml(exam, variants)));
 }
