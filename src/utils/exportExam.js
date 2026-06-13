@@ -3,7 +3,7 @@
 // Mỗi định dạng tách 2 file: ĐỀ BÀI và ĐÁP ÁN + LỜI GIẢI.
 import {
   Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell,
-  WidthType, BorderStyle, TableLayoutType, PageBreak
+  WidthType, BorderStyle, PageBreak
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { latexToHtml } from '../components/Latex';
@@ -140,19 +140,27 @@ function headerToDocx(html) {
 const noBorder = { top: { style: BorderStyle.NONE, size: 0 }, bottom: { style: BorderStyle.NONE, size: 0 }, left: { style: BorderStyle.NONE, size: 0 }, right: { style: BorderStyle.NONE, size: 0 } };
 const T = (text, opts = {}) => new TextRun({ text, size: 26, ...opts });   // 13pt mặc định
 
-// Bảng 2 cột cố định cho 4 phương án (fix lỗi cột bị bóp)
+// Bảng 2 cột cho 4 phương án — dùng % để không bị bóp cột
 function optionsTable(options) {
   const cell = (op) => new TableCell({
     borders: noBorder,
-    width: { size: 4650, type: WidthType.DXA },
+    width: { size: 50, type: WidthType.PERCENTAGE },
+    margins: { top: 20, bottom: 20, left: 80, right: 80 },
     children: [new Paragraph({ children: [T(`${op.label}. `, { bold: true }), ...latexRuns(op.text || '')] })]
   });
-  const emptyCell = () => new TableCell({ borders: noBorder, width: { size: 4650, type: WidthType.DXA }, children: [new Paragraph('')] });
+  const emptyCell = () => new TableCell({
+    borders: noBorder, width: { size: 50, type: WidthType.PERCENTAGE },
+    children: [new Paragraph('')]
+  });
   const rows = [];
   for (let r = 0; r < options.length; r += 2) {
     rows.push(new TableRow({ children: [cell(options[r]), options[r + 1] ? cell(options[r + 1]) : emptyCell()] }));
   }
-  return new Table({ layout: TableLayoutType.FIXED, columnWidths: [4650, 4650], width: { size: 9300, type: WidthType.DXA }, rows });
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    columnWidths: [4680, 4680],
+    rows
+  });
 }
 
 const docStyles = {
@@ -203,8 +211,17 @@ export async function exportWord(exam, variants) {
       if (q.solution) children.push(new Paragraph({ children: [T('Lời giải: ', { italics: true }), ...latexRuns(q.solution)] }));
     });
 
-    // Mỗi mã đề (nếu nhiều) là 1 section riêng, tự sang trang mới
-    return { properties: vi > 0 ? { type: 'nextPage' } : {}, children };
+    // A4 (11906 x 16838 twips) + lề: trên/dưới 1.5cm (~850), trái 2.5cm (~1417), phải 2cm (~1134)
+    return {
+      properties: {
+        page: {
+          size: { width: 11906, height: 16838 },
+          margin: { top: 850, bottom: 850, left: 1417, right: 1134 }
+        },
+        ...(vi > 0 ? { type: 'nextPage' } : {})
+      },
+      children
+    };
   });
   const blob = await Packer.toBlob(new Document({ styles: docStyles, sections }));
   saveAs(blob, `${safeName(exam.title)}.docx`);
@@ -217,20 +234,24 @@ export async function exportWord(exam, variants) {
 const KATEX_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.10/katex.min.css';
 
 const PDF_CSS = `
-  body { font-family: "Times New Roman", serif; font-size: 13pt; color: #000; line-height: 1.45; margin: 1.6cm; background: #fff; }
+  @page { size: A4; margin: 1.5cm 2cm 1.5cm 2.5cm; }
+  body { font-family: "Times New Roman", serif; font-size: 13pt; color: #000; line-height: 1.5; margin: 1.5cm 2cm 1.5cm 2.5cm; background: #fff; max-width: 21cm; }
   .exam-header { margin-bottom: 12px; }
-  .q { margin: 11px 0; page-break-inside: avoid; }
-  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 4px; }
+  .q { margin: 10px 0; page-break-inside: avoid; text-align: justify; }
+  .q > b:first-child { color: #000; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 28px; margin-top: 5px; padding-left: 14px; }
+  .opts > div { white-space: nowrap; overflow: visible; }
   .sol { margin: 4px 0 14px; padding-left: 12px; border-left: 3px solid #888; page-break-inside: avoid; }
   img { max-width: 300px; max-height: 190px; display: block; margin: 6px 0; }
   .akey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0 18px; }
-  h2 { margin: 6px 0; } h3 { margin: 12px 0 6px; }
+  h2 { margin: 6px 0; font-size: 15pt; } h3 { margin: 14px 0 6px; font-size: 13.5pt; }
+  .exam-title { text-align: center; margin-bottom: 14px; }
   .pagebreak { page-break-before: always; }
   .noprint { position: sticky; top: 8px; text-align: center; padding: 10px; background: #EEF2FF;
     border: 1px solid #C7D2FE; border-radius: 10px; margin-bottom: 16px; font-family: system-ui, sans-serif; font-size: 14px; }
   .noprint button { padding: 6px 18px; border: 0; border-radius: 8px; background: #4F46E5; color: #fff;
     font-weight: 700; cursor: pointer; margin-left: 8px; }
-  @media print { .noprint { display: none; } body { margin: 0; } }
+  @media print { .noprint { display: none; } }
   @media (max-width: 640px) { body { margin: .8cm; } .opts { grid-template-columns: 1fr; } }
 `;
 

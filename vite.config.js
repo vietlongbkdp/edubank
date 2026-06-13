@@ -11,7 +11,7 @@ export default defineConfig({
           mui: ['@mui/material', '@mui/x-data-grid'],
           charts: ['recharts'],
           katex: ['katex'],
-          docx: ['docx', 'mathml2omml']
+          docx: ['docx']
         }
       }
     }
